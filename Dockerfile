@@ -18,9 +18,9 @@ RUN apk update && apk add \
     wget \ 
     && wget "https://bootstrap.pypa.io/get-pip.py" -O /dev/stdout | python3
 
-WORKDIR /home/pi/sandbox-driver
+WORKDIR sandbox-driver
 
-RUN cd /home/pi/sandbox-driver/driver \
+RUN cd driver \
     && pip3 install autobahn==0.10.3
 
 RUN rm -rf /var/cache/apk/*
