@@ -24,4 +24,5 @@ RUN pip3 install autobahn==0.10.3
 
 RUN rm -rf /var/cache/apk/*
 #ENTRYPOINT ["tar", "-cvz", "/usr/lib/python3.5/site-packages/", "/home/sandbox-driver"]
-ENTRYPOINT ["python3", "driver/driver_client.py"]
+#ENTRYPOINT ["python3", "driver/driver_client.py"]
+ENTRYPOINT ["bash"]
