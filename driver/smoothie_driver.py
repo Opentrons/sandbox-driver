@@ -5,6 +5,7 @@ import asyncio, json, copy
 import datetime
 import sys
 from collections import Callable
+import os
 
 
 
@@ -392,8 +393,13 @@ class SmoothieDriver(object):
 				#yield from server.wait_closed()
 				print('here')
 			else:
-				asyncio.async(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3333))
-		
+				#asyncio.async(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3333))
+				smoothie_host=os.environ.get('SMOOTHIE_HOST', '0.0.0.0')
+				smoothie_port=int(os.environ.get('SMOOTHIE_PORT', '3333'))
+				asyncio.async(self.the_loop.create_connection(
+					lambda: callbacker,
+					host=smoothie_host,
+					port=smoothie_port))
 		except:
 			print(datetime.datetime.now(),' - error:driver.connects\n\r',sys.exc_info())
 			
