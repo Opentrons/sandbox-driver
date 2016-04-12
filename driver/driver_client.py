@@ -8,6 +8,7 @@ import datetime
 import sys
 import collections
 import copy
+import os
 
 from smoothie_driver import SmoothieDriver
 
@@ -647,7 +648,7 @@ class DriverClient():
         if not keep_trying:
             try:
                 print('\nDriver attempting crossbar connection\n')
-                self._make_connection()
+                self._make_connection(url_domain=url_domain, url_port=url_port)
             except:
                 print('crossbar connection attempt error:\n',sys.exc_info())
                 pass
@@ -656,7 +657,7 @@ class DriverClient():
                 while (self.session_factory._crossbar_connected == False):
                     try:
                         print('\nDriver attempting crossbar connection\n')
-                        self._make_connection()
+                        self._make_connection(url_domain=url_domain, url_port=url_port)
                     except KeyboardInterrupt:
                         self.session_factory._crossbar_connected = True
                     except:
@@ -701,7 +702,7 @@ if __name__ == '__main__':
 
         # INSTANTIATE DRIVERS
         print(datetime.datetime.now(),' - INSTANTIATE DRIVERS - smoothie_driver ','* * '*10)
-        smoothie_driver = SmoothieDriver()
+        smoothie_driver = SmoothieDriver(simulate=(os.environ.get('SMOOTHIE_SIMULATE', 'true')=='true'))
 
 
         # ADD DRIVERS
@@ -811,7 +812,10 @@ if __name__ == '__main__':
 
         print('END INIT')
 
-        driver_client.connect()
+        driver_client.connect(
+            url_domain=os.environ.get('CROSSBAR_HOST', '0.0.0.0'),
+            url_port=int(os.environ.get('CROSSBAR_PORT', '8080'))
+            )
 
     except KeyboardInterrupt:
         pass
