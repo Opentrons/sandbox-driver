@@ -17,8 +17,11 @@ RUN apk update && apk add \
     libffi-dev \ 
     python3 \
     python3-dev \
+    ser2net \
     wget \ 
     && wget "https://bootstrap.pypa.io/get-pip.py" -O /dev/stdout | python3
+
+ADD ser2net.conf /etc/
 
 WORKDIR /home/sandbox-driver
 
