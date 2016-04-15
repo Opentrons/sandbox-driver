@@ -17,7 +17,6 @@ RUN apk update && apk add \
     libffi-dev \ 
     python3 \
     python3-dev \
-    ser2net \
     wget \ 
     && wget "https://bootstrap.pypa.io/get-pip.py" -O /dev/stdout | python3
 
@@ -31,6 +30,5 @@ RUN rm -rf /var/cache/apk/*
 
 ADD . $APP_HOME
 
-RUN /usr/sbin/ser2net -c /etc/ser2net.conf
 #ENTRYPOINT ["tar", "-cvz", "/usr/lib/python3.5/site-packages/", "/home/sandbox-driver"]
 ENTRYPOINT ["python3", "driver/driver_client.py"]
