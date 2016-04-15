@@ -31,5 +31,6 @@ RUN rm -rf /var/cache/apk/*
 
 ADD . $APP_HOME
 
+RUN /usr/sbin/ser2net -c /etc/ser2net.conf
 #ENTRYPOINT ["tar", "-cvz", "/usr/lib/python3.5/site-packages/", "/home/sandbox-driver"]
-ENTRYPOINT ["/usr/sbin/ser2net","-c","/etc/ser2net.conf","&&","python3", "driver/driver_client.py"]
+ENTRYPOINT ["python3", "driver/driver_client.py"]
