@@ -149,9 +149,11 @@ class SmoothieDriver(object):
 			'ack_received':True,
 			'ack_ready':True,
 			'queue_size':0,
-			'direction':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0},
-			's_pos':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0},
-			'a_pos':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0}
+			'direction':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0},	# 0 = positive, 1 = negative
+			'smoothie_pos':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0},
+			'adjusted_pos':{'X':0,'Y':0,'Z':0,'A':0,'B':0,'C':0},
+			'absolute_mode':True,
+			'feedback_on':False
 		}
 
 		self.state_dict['simulation'] = simulate
@@ -194,6 +196,10 @@ class SmoothieDriver(object):
 				"code":"G90 G0",
 				"parameters":["","X","Y","Z","A","B"]
 			},
+			"rapid_linear_move":{
+				"code":"G0",
+				"parameters":["","X","Y","Z","A","B"]
+			},
 			"linear_move":{
 				"code":"G1",
 				"parameters":["","X","Y","Z","A","B"]
@@ -210,24 +216,20 @@ class SmoothieDriver(object):
 				"code":"G91",
 				"parameters":[]
 			},
-			"feedrate":{
+			"speed":{
 				"code":"F",
 				"parameters":[]
 			},
-			"feedrate_a":{
+			"speed_a":{
 				"code":"a",
 				"parameters":[]
 			},
-			"feedrate_b":{
+			"speed_b":{
 				"code":"b",
 				"parameters":[]
 			},
-			"feedrate_c":{
+			"speed_c":{
 				"code":"c",
-				"parameters":[]
-			},
-			"reset":{
-				"code":"reset",
 				"parameters":[]
 			},
 			"enable_motors":{
@@ -238,31 +240,58 @@ class SmoothieDriver(object):
 				"code":"M18",
 				"parameters":[]
 			},
-			"start_feedback":{
+			"feedback_on":{
 				"code":"M62",
 				"parameters":[]
 			},
-			"stop_feedback":{
+			"feedback_off":{
 				"code":"M63",
-				"parameters":[]
-			},
-			"limit_switches":{
-				"code":"M119",
 				"parameters":[]
 			},
 			"halt":{
 				"code":"M112",
 				"parameters":[]
 			},
+			"positions":{
+				"code":"M114",
+				"parameters":[]
+			},
+			"limit_switches":{
+				"code":"M119",
+				"parameters":[]
+			},
+			"feed_rate":{
+				"code":"M198",
+				"parameters":["","S","A","B"]
+			},
+			"seek_rate":{
+				"code":"M199",
+				"parameters":["","S","A","B"]
+			},
+			"max_rates":{
+				"code":"M203",
+				"parameters":["","X","Y","Z","A","B"]
+			},
+			"acceleration":{
+				"code":"M204",
+				"parameters":["","S","Z","A","B"]
+			},
+			"junction":{
+				"code":"M205",
+				"parameters":["","X","Z","S"]
+			},
+			"reset":{
+				"code":"reset",
+				"parameters":[]
+			},
 			"reset_from_halt":{
 				"code":"M999",
 				"parameters":[]
 			},
-			"positions":{
-				"code":"M114",
-				"parameters":[]
+			"nothing":{
+				"code":"",
+				"parameters":["X","Y","Z"."A","B","a","b"]
 			}
-
 		}
 
 
@@ -381,19 +410,12 @@ class SmoothieDriver(object):
 				self.the_loop.stop()
 			print(self.simulation)
 			if self.simulation:
-				#coro = self.the_loop.create_server(Simulator, '0.0.0.0', 3334)
-				#server = self.the_loop.run_until_complete(coro)
-				#asyncio.async(self.the_loop.create_server(Simulator,'0.0.0.0',3334))
 				print(simulator)
 				server = self.the_loop.run_until_complete(asyncio.start_server(simulator,'0.0.0.0',3334))
-				#asyncio.async(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3334))
-				#asyncio.async(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3334))
 				self.the_loop.run_until_complete(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3334))
 				
 				#yield from server.wait_closed()
-				print('here')
 			else:
-				#asyncio.async(self.the_loop.create_connection(lambda: callbacker, host='0.0.0.0', port=3333))
 				smoothie_host=os.environ.get('SMOOTHIE_HOST', '0.0.0.0')
 				smoothie_port=int(os.environ.get('SMOOTHIE_PORT', '3333'))
 				asyncio.async(self.the_loop.create_connection(
@@ -459,13 +481,22 @@ class SmoothieDriver(object):
 		#print("SmoothieDriver.lock check called")
 		print('\tack_received: ',self.state_dict['ack_received'])
 		print('\tack_ready: ',self.state_dict['ack_ready'])
-		if self.state_dict['ack_received'] == True and self.state_dict['ack_ready'] == True:
-			self.state_dict['locked'] = False
-			print('\tunlocked')
+		print('\tfeedback_on: ',self.state_dict['feedback_on'])
+		if self.state_dict['ack_received'] == True:
+			if self.state_dict['feedback_on'] == True:
+				if self.state_dict['ack_ready'] == True:
+					self.state_dict['locked'] = False
+					print('\tunlocked - 1')
+				else:
+					self.state_dict['locked'] = True
+					print('\tlocked - 1')
+			else:
+				self.state_dict['locked'] = False
+				print('\tunlocked - 2')
 			return False
 		else:
 			self.state_dict['locked'] = True
-			print('\tlocked')
+			print('\tlocked - 2')
 			return True
 
 
@@ -486,7 +517,17 @@ class SmoothieDriver(object):
 				if isinstance(self.meta_callbacks_dict['on_empty_queue'],Callable):
 					self.meta_callbacks_dict['on_empty_queue'](self.current_info['from'],self.current_info['session_id'])
 			else:
+				if self.command_queue[0].startswith('M62' ):
+					self.state_dict['feedback_on'] = True
+				elif self.command_queue[0].startswith( 'M63' ):
+					self.state_dict['feedback_on'] = False
+				if self.command_queue[0].startswith( 'G90' ):
+					self.state_dict['absolute_mode'] = True
+				if self.command_queue[0].startswith( 'G91' ):
+					self.state_dict['absolute_mode'] = False
+				
 				self.send(self.command_queue.pop(0))
+
 
 
 	def _format_text_data(self, text_data):
@@ -588,22 +629,22 @@ class SmoothieDriver(object):
 		for name_message, value in message_dict.items():
 			if name_message == 'None':
 				axis_found = False
-				for axis in list(self.state_dict['s_pos']):
+				for axis in list(self.state_dict['smoothie_pos']):
 					if axis in value:
 						axis_found = True
-						self.state_dict['s_pos'][axis] = value[axis]
+						self.state_dict['smoothie_pos'][axis] = value[axis]
 						if self.state_dict['direction'][axis] == 1:
-							self.state_dict['a_pos'][axis] = value[axis]
+							self.state_dict['adjusted_pos'][axis] = value[axis]
 						else:
-							self.state_dict['a_pos'][axis] = value[axis] + self.config_dict['slack'][axis]
+							self.state_dict['adjusted_pos'][axis] = value[axis] + self.config_dict['slack'][axis]
 
 				if axis_found == True:
-					pos_dict = {'pos':copy.deepcopy(self.state_dict['s_pos'])}
-					adj_pos_dict = {'adj_pos':copy.deepcopy(self.state_dict['a_pos'])}
+					pos_dict = {'pos':copy.deepcopy(self.state_dict['smoothie_pos'])}
+					adj_pos_dict = {'adj_pos':copy.deepcopy(self.state_dict['adjusted_pos'])}
 					for callback_name, callback in self.callbacks_dict.items():
-						if 's_pos' in callback['messages']:
+						if 'smoothie_pos' in callback['messages']:
 							callback['callback'](self.state_dict['name'], self.current_info['from'], self.current_info['session_id'], pos_dict)
-						if 'a_pos' in callback['messages']:
+						if 'adjusted_pos' in callback['messages']:
 							callback['callback'](self.state_dict['name'], self.current_info['from'], self.current_info['session_id'], adj_pos_dict)
 				
 
@@ -726,6 +767,36 @@ class SmoothieDriver(object):
 			self.meta_callbacks_dict['on_disconnect'](self.disconnected_info['from'],self.disconnected_info['session_id'])
 
 
+	def _adjust_positions(command_text, val):
+		if command_text.startswith("G90"):					
+			print('(1)')
+			print(val)
+			float_val = float(val)
+			print(float_val)
+			if float_val > self.state_dict['smoothie_pos'][param] and self.state_dict['direction'][param]==0:
+				print('(2)')
+				self.state_dict['direction'][param] = 1
+				float_val+=self.config_dict['slack'][param]
+			if float_val < self.state_dict['smoothie_pos'][param] and self.state_dict['direction'][param]==1:
+				print('(3)')
+				self.config_dict['direction'][param] = 0
+				float_val-=self.config_dict['slack'][param]
+				val = str(float_val)
+
+		if command_text.startswith("G91"):
+
+			float_val = float(val)
+			if float_val > 0 and self.state_dict['direction'][param]==0:
+				self.state_dict['direction'][param] = 1
+				float_val+=self.config_dict['slack'][param]
+			if float_val < 0 and self.state_dict['direction'][param]==1:
+				self.state_dict['direction'][param] = 0
+				float_val-=self.config_dict['slack'][param]
+				val = str(float_val)
+
+		return val
+
+
 	def send_command(self, from_, session_id, data):
 		"""
 
@@ -762,30 +833,9 @@ class SmoothieDriver(object):
 					print('data[',command,'] is dict')
 					for param, val in data[command].items():
 						if param in self.commands_dict[command]["parameters"]:
-							if param in list(self.state_dict['s_pos']):
-								if command == "move_to":
-									print('(1)')
-									print(val)
-									float_val = float(val)
-									print(float_val)
-									if float_val > self.state_dict['s_pos'][param] and self.state_dict['direction'][param]==0:
-										print('(2)')
-										self.state_dict['direction'][param] = 1
-										float_val+=self.config_dict['slack'][param]
-									if float_val < self.state_dict['s_pos'][param] and self.state_dict['direction'][param]==1:
-										print('(3)')
-										self.config_dict['direction'][param] = 0
-										float_val-=self.config_dict['slack'][param]
-										val = str(float_val)
-								if command == "move":
-									float_val = float(val)
-									if float_val > 0 and self.state_dict['direction'][param]==0:
-										self.state_dict['direction'][param] = 1
-										float_val+=self.config_dict['slack'][param]
-									if float_val < 0 and self.state_dict['direction'][param]==1:
-										self.state_dict['direction'][param] = 0
-										float_val-=self.config_dict['slack'][param]
-										val = str(float_val)
+							if param in list(self.state_dict['smoothie_pos']):
+
+								val = self._adjust_positions(command_text, val)
 
 							command_text += " "
 							command_text += str(param)
@@ -802,29 +852,9 @@ class SmoothieDriver(object):
 						if isinstance(data[command], dict):
 							for param, val in data[command].items():
 								if param in val.parameters:
-									if param in self.state_dict['s_pos']:
-										if command == "G90 G0":
-											float_val = float(val)
-											if float_val > self.state_dict['s_pos'][param] and self.state_dict['direction'][param]==0:
-												self.state_dict['direction'][param] = 1
-												float_val+=self.config_dict['slack'][param]
-											if float_val < self.state_dict['s_pos'][val] and self.state_dict['direction'][param]==1:
-												self.state_dict['direction'][param] = 0
-												float_val-=self.config_dict['slack'][param]
-												val = str(float_val)
-										if command == "G91 G0":
-											float_val = float(val)
-											if float_val > 0 and self.state_dict['direction'][param]==0:
-												self.state_dict['direction'][param] = 1
-												float_val+=self.config_dict['slack'][param]
-											if float_val < 0 and self.state_dict['direction'][param]==1:
-												self.state_dict['direction'][param] = 0
-												float_val-=self.config_dict['slack'][param]
-												val = str(float_val)
-
-
-
-
+									if param in self.state_dict['smoothie_pos']:
+										
+										val = self._adjust_positions(command_text, val)
 
 									command_text += " "
 									command_text += str(param)
