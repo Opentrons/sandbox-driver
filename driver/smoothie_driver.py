@@ -470,9 +470,9 @@ class SmoothieDriver(object):
 				self.state_dict['feedback_on'] = True
 			elif command.startswith('M63'):
 				self.state_dict['feedback_on'] = False
-		    
+
 			if command.startswith('G90'):
-		    	self.state_dict['absolute_mode'] = True
+				self.state_dict['absolute_mode'] = True
 			if command.startswith('G91'):
 				self.state_dict['absolute_mode'] = False
 			self.lock_check()
