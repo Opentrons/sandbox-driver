@@ -768,7 +768,7 @@ class SmoothieDriver(object):
 			self.meta_callbacks_dict['on_disconnect'](self.disconnected_info['from'],self.disconnected_info['session_id'])
 
 
-	def _adjust_positions(self, command_text, val):
+	def _adjust_positions(self, command_text, val, param):
 		if command_text.startswith("G90"):					
 			print('(1)')
 			print(val)
@@ -836,7 +836,7 @@ class SmoothieDriver(object):
 						if param in self.commands_dict[command]["parameters"]:
 							if param in list(self.state_dict['smoothie_pos']):
 
-								val = self._adjust_positions(command_text, val)
+								val = self._adjust_positions(command_text, val, param)
 
 							command_text += " "
 							command_text += str(param)

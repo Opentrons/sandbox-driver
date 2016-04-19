@@ -10,8 +10,8 @@ This code handles communication with devices (eg Smoothieboard). It is made up o
 ---
 ## driver_client.py:
 
-This module connects to other application componenents (Frontend, Bootstrapper, Labware) using Crossbar.io 
-and WAMP, and interfaces with device drivers (eg smoothie_driver.py) to communicate with devices.
+This module connects to other application componenents (Frontend, Crossbar, Ser2net, etc.) using Crossbar.io 
+and WAMP, and interfaces with device drivers (e.g. smoothie_driver.py) to communicate with devices.
 
 
 topic = {
@@ -28,12 +28,13 @@ Incoming and Outgoing Data Format:
 	'type': string,
 	'to': uuid-string,
 	'from': uuid-string,
-	'sessionID': uuid-string
+	'sessionID': uuid-string,
 	'data':
 	{
 		'name': string,
-		'message':{message:param}
-	}
+		'message': { message : param }
+	},
+	'time': timestamp
 }
 ```
 
