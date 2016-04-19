@@ -456,6 +456,16 @@ class SmoothieDriver(object):
 		print('\n\targs: ',locals(),'\n')
 		self.state_dict['queue_size'] = len(self.command_queue)
 		command = message['command'] + self.config_dict['message_ender']
+
+		if command.startswith('M62' ):
+			self.state_dict['feedback_on'] = True
+		elif command.startswith( 'M63' ):
+			self.state_dict['feedback_on'] = False
+		if command.startswith( 'G90' ):
+			self.state_dict['absolute_mode'] = True
+		if command.startswith( 'G91' ):
+			self.state_dict['absolute_mode'] = False
+
 		if self.simulation:
 			self.simulation_queue.append(message)
 		
@@ -517,15 +527,6 @@ class SmoothieDriver(object):
 				if isinstance(self.meta_callbacks_dict['on_empty_queue'],Callable):
 					self.meta_callbacks_dict['on_empty_queue'](self.current_info['from'],self.current_info['session_id'])
 			else:
-				if self.command_queue[0].startswith('M62' ):
-					self.state_dict['feedback_on'] = True
-				elif self.command_queue[0].startswith( 'M63' ):
-					self.state_dict['feedback_on'] = False
-				if self.command_queue[0].startswith( 'G90' ):
-					self.state_dict['absolute_mode'] = True
-				if self.command_queue[0].startswith( 'G91' ):
-					self.state_dict['absolute_mode'] = False
-				
 				self.send(self.command_queue.pop(0))
 
 
