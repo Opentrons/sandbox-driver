@@ -466,14 +466,15 @@ class SmoothieDriver(object):
 			# should have already been checked
 			self.state_dict['ack_received'] = False
 			self.state_dict['ack_ready'] = False  # needs to be set here because not ready message from device takes too long, ack_received already received
-			if command.startswith( 'M62' ):
-			    self.state_dict['feedback_on'] = True
-		    elif command.startswith( 'M63' ):
-			    self.state_dict['feedback_on'] = False
-		    if command.startswith( 'G90' ):
-			    self.state_dict['absolute_mode'] = True
-		    if command.startswith( 'G91' ):
-			    self.state_dict['absolute_mode'] = False
+			if command.startswith('M62'):
+				self.state_dict['feedback_on'] = True
+			elif command.startswith('M63'):
+				self.state_dict['feedback_on'] = False
+		    
+			if command.startswith('G90'):
+		    	self.state_dict['absolute_mode'] = True
+			if command.startswith('G91'):
+				self.state_dict['absolute_mode'] = False
 			self.lock_check()
 			self.current_info = {'session_id':message['session_id'],'from':message['from']}
 			self.smoothie_transport.write(command.encode())
