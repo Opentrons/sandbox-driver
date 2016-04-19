@@ -157,7 +157,7 @@ class DriverClient():
 
     def dispatch_message(self, message):
         print(datetime.datetime.now(),' - DriverClient.dispatch_message:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         try:
             dictum = collections.OrderedDict(json.loads(message.strip(), object_pairs_hook=collections.OrderedDict))
             if 'type' in dictum and 'from' in dictum and 'sessionID' in dictum and 'data' in dictum:
@@ -179,7 +179,7 @@ class DriverClient():
 
     def handshake(self, data):
         print(datetime.datetime.now(),' - DriverClient.handshake:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
 
         data_dict = json.loads(data)
         if isinstance(data_dict, dict):
@@ -218,7 +218,7 @@ class DriverClient():
 
     def gen_client_id(self):
         print(datetime.datetime.now(),' - DriverClient.gen_client_id:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         ret_id = ''
         if len(self.clients) > self.max_clients:
             self.publish( 'frontend', '' , '' , 'handshake' , 'driver' , 'result' , 'fail' )
@@ -232,7 +232,7 @@ class DriverClient():
 
     def client_check(self, id_, session_id):
         print(datetime.datetime.now(),' - DriverClient.client_check:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if id_ in self.clients:
             return True
         else:
@@ -241,7 +241,7 @@ class DriverClient():
 
     def publish_client_ids(self, id_, session_id):
         print(datetime.datetime.now(),' - DriverClient.publish_client_ids:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if id_ in self.clients:
             self.publish( id_ , id_ , session_id, 'handshake' , 'driver' , 'ids' , list(self.clients) )
         else:
@@ -253,7 +253,7 @@ class DriverClient():
         """
         """
         print(datetime.datetime.now(),' - DriverClient.publish:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if self.session_factory is not None and topic is not None and type_ is not None:
             if name is None:
                 name = 'None'
@@ -290,7 +290,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),'- DriverClient.drivers:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_list = list(self.driver_dict)
         if name is None:
             name = 'None'
@@ -307,7 +307,7 @@ class DriverClient():
         param: driver object
         """
         print(datetime.datetime.now(),' - DriverClient.add_driver:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         self.driver_dict[name] = param
         return_list = list(self.driver_dict)
         if from_ == "":
@@ -323,7 +323,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.remove_driver:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         del self.driver_dict[name]
         return_list = list(self.driver_dict)
         if from_ == "":
@@ -338,7 +338,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.callbacks:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict[name].callbacks()
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'callbacks',return_dict)
@@ -353,7 +353,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.meta_callbacks:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict[name].meta_callbacks()
         self.publish(from_,from_,session_id,'driver',name,'meta_callbacks',return_dict)
         return return_dict
@@ -365,7 +365,7 @@ class DriverClient():
         param: { meta-callback-name : meta-callback-object }
         """
         print(datetime.datetime.now(),' - DriverClient.set_meta_callback:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if isinstance(param,dict):
             return_dict = self.driver_dict.get(name).set_meta_callback(list(param)[0],list(param.values())[0])
         else:
@@ -380,7 +380,7 @@ class DriverClient():
         param: { callback obj: [messages list] }
         """
         print(datetime.datetime.now(),' - DriverClient.add_callback:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).add_callback(list(param)[0],list(param.values())[0])
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'callbacks',return_dict)
@@ -394,7 +394,7 @@ class DriverClient():
         param: name of callback to remove
         """
         print(datetime.datetime.now(),' - DriverClient.remove_callback:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict[name].remove_callback(param)
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'callbacks',return_dict)
@@ -409,7 +409,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.flow:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).flow()
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'flow',return_dict)
@@ -424,7 +424,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.clear_queue:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).clear_queue()
         if from_ == "":
             self.publish('frontend',from_,session_id,'labware',name,'clear_queue',return_dict)
@@ -439,7 +439,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.driver_connect:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         print('self.driver_dict: ',self.driver_dict)
         print('self.driver_dict[',name,']: ',self.driver_dict[name])
         self.driver_dict[name].connect(from_,session_id)    # <--- This should lead to on_connection_made callback
@@ -451,7 +451,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.driver_disconnect:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         self.driver_dict.get(name).disconnect(from_,session_id) # <--- This should lead to on_connection_lost callback
 
 
@@ -461,7 +461,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.commands:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).commands()
         self.publish(from_,from_,session_id,'driver',name,'commands',return_dict)
         return return_dict
@@ -473,7 +473,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.meta_commands:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_list = list(self.meta_dict)
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'meta_commands',return_list)
@@ -488,7 +488,7 @@ class DriverClient():
         param: n/a
         """
         print(datetime.datetime.now(),' - DriverClient.configs:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).configs()
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'configs',return_dict)
@@ -503,7 +503,7 @@ class DriverClient():
         param: { config name : config value }
         """
         print(datetime.datetime.now(),' - DriverClient.set_config:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if isinstance(param,dict):
             self.driver_dict.get(name).set_config(list(param)[0],list(param.values)[0])
         return_dict = self.driver_dict.get(name).configs()
@@ -536,7 +536,7 @@ class DriverClient():
 
         """
         print(datetime.datetime.now(),' - DriverClient.meta_command:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if isinstance(data, dict):
             name = data['name']
             value = data['message']
@@ -595,7 +595,7 @@ class DriverClient():
         }
         """
         print(datetime.datetime.now(),' - DriverClient.send_command:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if isinstance(data, dict):
             name = data['name']
             value = data['message']
@@ -618,7 +618,7 @@ class DriverClient():
 
     def _make_connection(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
         print(datetime.datetime.now(),' - DriverClient._make_connection:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if self.loop.is_running():
             print('self.loop is running. stopping loop now')
             self.loop.stop()
@@ -670,7 +670,7 @@ class DriverClient():
 
     def disconnect(self):
         print(datetime.datetime.now(),' - DriverClient.disconnect:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         self.transport.close()
         self.transport_factory = None
 
@@ -742,10 +742,10 @@ if __name__ == '__main__':
             if from_ != session_id:
                 driver_client.publish(from_,from_,session_id,'driver',name,list(data_dict)[0],dd_value)
 
-        def a_pos(name, from_, session_id, data_dict):
+        def adjusted_pos(name, from_, session_id, data_dict):
             """
             """
-            print(datetime.datetime.now(),' - driver_client.a_pos:')
+            print(datetime.datetime.now(),' - driver_client.adjusted_pos:')
             print('\n\targs: ',locals(),'\n')
             dd_name = list(data_dict)[0]
             dd_value = data_dict[dd_name]
@@ -753,10 +753,10 @@ if __name__ == '__main__':
             if from_ != session_id:
                 driver_client.publish(from_,from_,session_id,'driver',name,list(data_dict)[0],dd_value)
 
-        def s_pos(name, from_, session_id, data_dict):
+        def smoothie_pos(name, from_, session_id, data_dict):
             """
             """
-            print(datetime.datetime.now(),' - driver_client.s_pos:')
+            print(datetime.datetime.now(),' - driver_client.smoothie_pos:')
             print('\n\targs: ',locals(),'\n')
             dd_name = list(data_dict)[0]
             dd_value = data_dict[dd_name]
@@ -771,8 +771,8 @@ if __name__ == '__main__':
         print('*\t*\t* add callbacks via harness\t*\t*\t*')
         driver_client.add_callback(driver_client.id,'','smoothie', {none:['None']})
         driver_client.add_callback(driver_client.id,'','smoothie', {positions:['M114']})
-        driver_client.add_callback(driver_client.id,'','smoothie', {a_pos:['a_pos']})
-        driver_client.add_callback(driver_client.id,'','smoothie', {s_pos:['s_pos']})
+        driver_client.add_callback(driver_client.id,'','smoothie', {adjusted_pos:['adjusted_pos']})
+        driver_client.add_callback(driver_client.id,'','smoothie', {smoothie_pos:['smoothie_pos']})
 
         for d in driver_client.drivers(driver_client.id,'',None,None):
             print (driver_client.callbacks(driver_client.id,'',d, None))

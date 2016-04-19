@@ -21,7 +21,7 @@ topic = {
     'bootloader' : 'com.opentrons.bootloader'
 }
 
-Incoming and Outgoing Data Format:
+Incoming and Outgoing (I/O) Data Format:
 
 ```
 {
@@ -57,9 +57,9 @@ state_dict:
 * 'ack_received' - is there acknowledgement data received from device
 * 'ack_ready' - is there acknowledgement device is ready to receive data
 * 'queue_size' - size of the command queue
-* 'direction':{'X':0, ... , 'C':0} - direction of given axis
-* 's_pos':{'X':0, ... , 'C':0} - smoothie's record of position
-* 'a_pos':{'X':0, ... , 'C':0} - adjusted (actual) position
+* 'direction':{'X':0, ... , 'C':0} - direction of given axis, 0 = positive, 1 = negative
+* 'smoothie_pos':{'X':0, ... , 'C':0} - smoothie's record of position
+* 'adjusted_pos':{'X':0, ... , 'C':0} - adjusted (actual) position
 
 
 config_dict:
@@ -71,7 +71,7 @@ config_dict:
 * 'ack_ready_message' - message used to acknowledge device ready to receive data (Smoothieboard uses 'stat' for this)
 * 'ack_ready_parameter' - parameter used to acknowledge device ready to receive data (Smoothieboard does not use this)
 * 'ack_ready_value' - parameter or message value used to acknowledge device ready to receive data (Smoothieboard uses 0 for this)
-* 'x_slack' - parameter used to adjust position
+* 'slack':{'X':0.5, ... , 'C':0.0} - parameter used to adjust position when switching direction
 
 
 callbacks_dict:
@@ -84,7 +84,7 @@ data accordingly. This dictionary starts out empty but has the following format:
 	callback name:
 	{
 		'callback': callback oeject,
-		'messages': [ list of messags ]
+		'messages': [ list of messages ]
 	},
 	...
 }
@@ -92,7 +92,9 @@ data accordingly. This dictionary starts out empty but has the following format:
 
 Data subsequently transmitted to a given callback is of the form:
 
-{ message: { param:value, ... } }
+{ message: { param : value, ... } }
+
+This dictionary fits into the 'data' element of the I/O Format.
 
 It is important to note that a large amount of useful data comes back without a "message". By default, such 
 data gets attached to the message 'None', so almost all devices should have a callback for 'None' messages. 
@@ -142,11 +144,8 @@ handling that could be added
 [sandbox-driver](#sandbox-driver)
 
 ---
-TODO: 
-* Complete commands dictionary for Smoothieboard.
-* Some examples of commands and their responses.
-* Error reporting to Frontend, Bootstrapper
-* 
+TODO:
+* Add test coverage
 
 
 
