@@ -290,7 +290,7 @@ class SmoothieDriver(object):
 			},
 			"nothing":{
 				"code":"",
-				"parameters":["X","Y","Z"."A","B","a","b"]
+				"parameters":["X","Y","Z","A","B","a","b"]
 			}
 		}
 
