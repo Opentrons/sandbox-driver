@@ -126,7 +126,7 @@ class SmoothieDriver(object):
 	def __init__(self, simulate=True):
 		"""
 		"""
-		print(datetime.datetime.now(),' - driver.__init__:')
+		print(datetime.datetime.now(),' - SmoothieDriver.__init__:')
 		#print('\n\targs: ',locals(),'\n')
 		self.simulation = simulate
 		self.the_loop = asyncio.get_event_loop()

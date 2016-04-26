@@ -10,7 +10,7 @@ import collections
 import copy
 import os
 
-from smoothie_driver import SmoothieDriver
+from driver.smoothie_driver import SmoothieDriver
 
 from autobahn.asyncio import wamp, websocket
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner 
@@ -36,7 +36,7 @@ class WampComponent(wamp.ApplicationSession):
         Starts instatiation of robot objects by calling :meth:`otone_client.instantiate_objects`.
         """
         print(datetime.datetime.now(),' - driver_client : WampComponent.onJoin:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if not self.factory._myAppSession:
             self.factory._myAppSession = self
         try:
@@ -49,7 +49,7 @@ class WampComponent(wamp.ApplicationSession):
             """Hook for factory to call _handshake()
             """
             print(datetime.datetime.now(),' - driver_client : WampComponent.handshake:')
-            print('\n\targs: ',locals(),'\n')
+            #print('\n\targs: ',locals(),'\n')
             try:
                 self.factory._handshake(client_data)
             except AttributeError:
@@ -60,7 +60,7 @@ class WampComponent(wamp.ApplicationSession):
             """Hook for factory to call dispatch_message()
             """
             print(datetime.datetime.now(),' - driver_client : WampComponent.dispatch_message:')
-            print('\n\targs: ',locals(),'\n')
+            #print('\n\targs: ',locals(),'\n')
             try:
                 self.factory._dispatch_message(client_data)
             except AttributeError:
@@ -71,13 +71,12 @@ class WampComponent(wamp.ApplicationSession):
         yield from self.subscribe(dispatch_message, 'com.opentrons.driver')
 
 
-
     def onLeave(self, details):
         """Callback fired when WAMP session has been closed.
         :param details: Close information.
         """
         print('driver_client : WampComponent.onLeave:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if self.factory._myAppSession == self:
             self.factory._myAppSession = None
         try:
@@ -100,11 +99,18 @@ class WampComponent(wamp.ApplicationSession):
 
 class DriverClient():
 
+    _session_id = False
+    
     def __init__(self):
         #__init__ VARIABLES FROM HARNESS
         print(datetime.datetime.now(),' - DriverClient.__init__:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
+        
+        # driver_dict stores drivers by name:object pair eg 'smoothie':<smoothie_driver>
         self.driver_dict = {}
+
+        # meta_dict is a dictionary of meta functions that should apply to each driver
+        # 'drivers' is a special case because it lists all the drivers and is the only one that does not require a driver name
         self.meta_dict = {
             'drivers' : lambda from_,session_id,name,param: self.drivers(from_,session_id,name,param),
             'add_driver' : lambda from_,session_id,name,param: self.add_driver(from_,session_id,name,param),
@@ -124,11 +130,14 @@ class DriverClient():
             'meta_commands' : lambda from_,session_id,name,param: self.meta_commands(from_,session_id,name,param)
         }
 
+
+        # in_dispatcher routes the incoming message according to type.
         self.in_dispatcher = {
             'command': lambda from_,session_id,data: self.send_command(from_,session_id,data),
             'meta': lambda from_,session_id,data: self.meta_command(from_,session_id,data)
         }
 
+        # topic stores the possible url_topics for publishing to
         self.topic = {
             'frontend' : 'com.opentrons.frontend',
             'driver' : 'com.opentrons.driver',
@@ -136,11 +145,14 @@ class DriverClient():
             'bootstrapper' : 'com.opentrons.bootstrapper'
         }
 
+        # clients stores uuid:url_topic pairs for publishing to
         self.clients = {
             # uuid : 'com.opentrons.[uuid]'
         }
+
         self.max_clients = 4
 
+        # uuid for this object
         self.id = str(uuid.uuid4())
 
         self.session_factory = wamp.ApplicationSessionFactory()
@@ -157,7 +169,7 @@ class DriverClient():
 
     def dispatch_message(self, message):
         print(datetime.datetime.now(),' - DriverClient.dispatch_message:')
-        #print('\n\targs: ',locals(),'\n')
+        print('\n\targs: ',locals(),'\n')
         try:
             dictum = collections.OrderedDict(json.loads(message.strip(), object_pairs_hook=collections.OrderedDict))
             if 'type' in dictum and 'from' in dictum and 'sessionID' in dictum and 'data' in dictum:
@@ -192,7 +204,7 @@ class DriverClient():
                     if 'data' in data_dict:
                         if 'message' in data_dict['data']:
                             if 'extend' in data_dict['data']['message']:
-                                print('handshake called again on client ',client_id,'. We could have done something here to repopulate data')
+                                print('handshake called again on client ',client_id,'. We could do something here to repopulate data')
                                 self.publish( client_id , client_id , client_id, 'handshake','driver','result','already_connected')
                             if 'shake' in data_dict['data']['message']:
                                 self.publish_client_ids(client_id,client_id)
@@ -231,7 +243,7 @@ class DriverClient():
 
 
     def client_check(self, id_, session_id):
-        print(datetime.datetime.now(),' - DriverClient.client_check:')
+        #print(datetime.datetime.now(),' - DriverClient.client_check:')
         #print('\n\targs: ',locals(),'\n')
         if id_ in self.clients:
             return True
@@ -249,18 +261,12 @@ class DriverClient():
         return list(self.clients)
 
 
-    def publish(self,topic,to,session_id,type_,name,message,param):
+    def _publish(self,topic,to,session_id, type_, name='', message='', param=''):
         """
         """
         print(datetime.datetime.now(),' - DriverClient.publish:')
-        #print('\n\targs: ',locals(),'\n')
+        print('\n\targs: ',locals(),'\n')`
         if self.session_factory is not None and topic is not None and type_ is not None:
-            if name is None:
-                name = 'None'
-            if message is None:
-                message = ''
-            if param is None:
-                param = ''
             if self.session_factory is not None:
                 if self.session_factory._myAppSession is not None:
                     time_string = str(datetime.datetime.now())
@@ -324,12 +330,12 @@ class DriverClient():
         """
         print(datetime.datetime.now(),' - DriverClient.remove_driver:')
         #print('\n\targs: ',locals(),'\n')
-        del self.driver_dict[name]
-        return_list = list(self.driver_dict)
+        return_dict = {'remove_driver':list(self.driver_dict)}
+        
         if from_ == "":
-            self.publish('frontend',from_,session_id,'driver',name,'drivers',return_list)
+            self.publish('frontend',from_,session_id,'driver',name,'drivers',return_dict)
         else:
-            self.publish(from_,from_,session_id,'driver',name,'drivers',return_list)
+            self.publish(from_,from_,session_id,'driver',name,'drivers',return_dict)
 
 
     def callbacks(self, from_, session_id, name, param):
@@ -339,7 +345,8 @@ class DriverClient():
         """
         print(datetime.datetime.now(),' - DriverClient.callbacks:')
         #print('\n\targs: ',locals(),'\n')
-        return_dict = self.driver_dict[name].callbacks()
+        return_dict = {'callbacks':self.driver_dict[name].callbacks()}
+        
         if from_ == "":
             self.publish('frontend',from_,session_id,'driver',name,'callbacks',return_dict)
         else:
@@ -354,7 +361,8 @@ class DriverClient():
         """
         print(datetime.datetime.now(),' - DriverClient.meta_callbacks:')
         #print('\n\targs: ',locals(),'\n')
-        return_dict = self.driver_dict[name].meta_callbacks()
+        return_dict = {'meta_callbacks':self.driver_dict[name].meta_callbacks()}
+        
         self.publish(from_,from_,session_id,'driver',name,'meta_callbacks',return_dict)
         return return_dict
 
@@ -427,9 +435,9 @@ class DriverClient():
         #print('\n\targs: ',locals(),'\n')
         return_dict = self.driver_dict.get(name).clear_queue()
         if from_ == "":
-            self.publish('frontend',from_,session_id,'labware',name,'clear_queue',return_dict)
+            self.publish('frontend',from_,session_id,'driver',name,'clear_queue',return_dict)
         else:
-            self.publish(from_,from_,session_id,'labware',name,'clear_queue',return_dict)
+            self.publish(from_,from_,session_id,'driver',name,'clear_queue',return_dict)
         return return_dict
 
 
@@ -440,12 +448,12 @@ class DriverClient():
         """
         print(datetime.datetime.now(),' - DriverClient.driver_connect:')
         #print('\n\targs: ',locals(),'\n')
-        print('self.driver_dict: ',self.driver_dict)
-        print('self.driver_dict[',name,']: ',self.driver_dict[name])
+        #print('self.driver_dict: ',self.driver_dict)
+        #print('self.driver_dict[',name,']: ',self.driver_dict[name])
         self.driver_dict[name].connect(from_,session_id)    # <--- This should lead to on_connection_made callback
 
 
-    def driver_disconnect(self, from_, name, param):
+    def driver_disconnect(self, from_, session_id, name, param):
         """
         name: name of driver
         param: n/a
@@ -453,7 +461,7 @@ class DriverClient():
         print(datetime.datetime.now(),' - DriverClient.driver_disconnect:')
         #print('\n\targs: ',locals(),'\n')
         self.driver_dict.get(name).disconnect(from_,session_id) # <--- This should lead to on_connection_lost callback
-
+        
 
     def commands(self, from_, session_id, name, param):
         """
@@ -462,7 +470,7 @@ class DriverClient():
         """
         print(datetime.datetime.now(),' - DriverClient.commands:')
         #print('\n\targs: ',locals(),'\n')
-        return_dict = self.driver_dict.get(name).commands()
+        return_dict = {'commands':self.driver_dict.get(name).commands()}
         self.publish(from_,from_,session_id,'driver',name,'commands',return_dict)
         return return_dict
 
@@ -536,54 +544,24 @@ class DriverClient():
 
         """
         print(datetime.datetime.now(),' - DriverClient.meta_command:')
-        #print('\n\targs: ',locals(),'\n')
+        print('\n\targs: ',locals(),'\n')
         if isinstance(data, dict):
             name = data['name']
             value = data['message']
-            if name in self.driver_dict:
-                if isinstance(value, dict):
-                    command = list(value)[0]
-                    params = value[command]
-                    try:
-                        self.meta_dict[command](from_,session_id,name,params)
-                    except:
-                        if from_ == "":
-                            self.publish('frontend',from_,session_id,'driver',name,'error',sys.exc_info())
-                        else:
-                            self.publish(from_,from_,session_id,'driver',name,'error',sys.exc_info())
-                        print(datetime.datetime.now(),' - meta_command error: ',sys.exc_info())
-                elif isinstance(value, str):
-                    command = value
-                    try:
-                        self.meta_dict[command](from_,session_id,name,None)
-                    except:
-                        if from_ == "":
-                            self.publish('frontend',from_,session_id,'driver',name,'error',sys.exc_info())
-                        else:
-                            self.publish(from_,from_,session_id,'driver',name,'error',sys.exc_info())
-                        print(datetime.datetime.now(),' - meta_command error: ',sys.exc_info())
+            if isinstance(value, dict):
+                command = list(value)[0]
+                params = value[command]
+            elif isinstance(value, str):
+                command = value
+                params = None
+            if command != 'drivers':
+                if name in list(self.driver_dict):
+                    self.meta_dict[command](from_,session_id,name,params)
+                else:
+                    return_dict = {command:'driver not found'}
+                    self.publish(from_,from_,session_id,'driver',name,'ERROR',return_dict)
             else:
-                if isinstance(value, dict):
-                    command = list(value)[0]
-                    params = value[command]
-                    try:
-                        self.meta_dict[command](from_,session_id,None, params)
-                    except:
-                        if from_ == "":
-                            self.publish('frontend',from_,session_id,'driver',name,'error',sys.exc_info())
-                        else:
-                            self.publish(from_,from_,session_id,'driver',name,'error',sys.exc_info())
-                        print(datetime.datetime.now(),' - meta_command error, name not in drivers: ',sys.exc_info())
-                elif isinstance(value, str):
-                    command = value
-                    try:
-                        self.meta_dict[command](from_,session_id,None,None)
-                    except:
-                        if from_ == "":
-                            self.publish('frontend',from_,session_id,'driver','None','error',sys.exc_info())
-                        else:
-                            self.publish(from_,from_,session_id,'driver','None','error',sys.exc_info())
-                        print(datetime.datetime.now(),' - meta_command error, name not in drivers: ',sys.exc_info())
+                self.meta_dict[command](from_,session_id,name,params)
 
 
     def send_command(self, from_, session_id, data):
@@ -631,16 +609,15 @@ class DriverClient():
             self.loop.run_forever()
 
 
-    def connect(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False, keep_trying=True, period=5):
+    def connect(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', keep_trying=False, period=5):
         print(datetime.datetime.now(),' - DriverClient.connect:')
-        print('\n\targs: ',locals(),'\n')
+        #print('\n\targs: ',locals(),'\n')
         if self.transport_factory is None:
             url = url_protocol+"://"+url_domain+':'+str(url_port)+'/'+url_path
 
             self.transport_factory = websocket.WampWebSocketClientFactory(self.session_factory,
-                                                                            url=url,
-                                                                            debug=debug,
-                                                                            debug_wamp=debug_wamp)
+                                                                            url=url)
+
 
         self.session_factory._handshake = self.handshake
         self.session_factory._dispatch_message = self.dispatch_message
@@ -666,7 +643,7 @@ class DriverClient():
                     finally:
                         print('\nDriver connection failed, sleeping for 5 seconds\n')
                         time.sleep(period)
-            
+
 
     def disconnect(self):
         print(datetime.datetime.now(),' - DriverClient.disconnect:')
@@ -698,7 +675,7 @@ if __name__ == '__main__':
         # INITIAL SETUP
         print(datetime.datetime.now(),' - INITIAL SETUP - publisher, harness, subscriber ','* * '*10)
         driver_client = DriverClient()
-        
+
 
         # INSTANTIATE DRIVERS
         print(datetime.datetime.now(),' - INSTANTIATE DRIVERS - smoothie_driver ','* * '*10)

@@ -1,5 +1,5 @@
 try:
-	from setuptools import setup
+	from setuptools import setup, find_packages
 except ImportError:
 	from distutils.core import setup
 
@@ -13,9 +13,16 @@ config = {
 		'coverage',
 		'autobahn'
 	],
-	'packages': ['driver'],
+	'packages': find_packages(exclude=["tests"]),
+	'package_data': {
+		"driver": [
+			
+		]
+	},
 	'scripts': ['./bin/driver-test'],
-	'name': 'driver'
+	'name': 'driver',
+	'zip_safe': False,
+	'test_suite': 'nose.collector',
 }
 
 setup(**config)
