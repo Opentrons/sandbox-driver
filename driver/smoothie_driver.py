@@ -719,7 +719,9 @@ class SmoothieDriver(object):
 		print(datetime.datetime.now(),' - driver._on_raw_data:')
 		#print('\n\targs: ',locals(),'\n')
 		if isinstance(self.meta_callbacks_dict['on_raw_data'],Callable):
-			self.meta_callbacks_dict['on_raw_data'](self.current_info['from'],self.current_info['session_id'],data)
+                        if isinstance(data,bytes):
+                                data = data.decode()
+                        self.meta_callbacks_dict['on_raw_data'](self.current_info['from'],self.current_info['session_id'],data)
 
 
 	def _smoothie_data_handler(self, datum):
