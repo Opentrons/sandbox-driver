@@ -114,34 +114,11 @@ class Controller():
         self.publish(msg='session_id',params=str(new_session_id))
 
     def close_session(self, message):
-        pass
+        if message['close_session'] in self._sessions:
+            self._sessions[message['close_session']].close()
 
     def connect_session(self, session):
         session.connect()
-
-    def _handshake(self, data):
-        """Handles starting and closing sessions"""
-        if isinstance(data, dict):
-
-            if 'start_session' in data:
-                if data['start_session'] in self._sessions:
-                    # log here
-                    # publish the session_id
-                    self.publish(msg='session_id',params=str(new_session_id))
-                else:
-                    new_session_id = uuid.uuid4()
-                    new_session = Session(str(new_session_id))
-                    self._sessions[new_session_id] = new_session
-                    self._sessions[new_session_id].register_on_disconnect(self._on_session_disconnect)
-                    self._sessions[new_session_id].connect()
-                    # publish the session_id
-                    self.publish(msg='session_id',params=str(new_session_id))
-                    
-
-            if 'close_session' in data:
-                if data['close_session'] in self._sessions:
-                    self._sessions[data['close_session']].close()
-
 
     def _make_connection(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
         try:

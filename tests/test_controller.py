@@ -69,6 +69,15 @@ class ControllerTest(unittest.TestCase):
 		self.assertTrue(self.controller.publish.called)
 		self.assertTrue(self.controller.connect_session.called)
 
+	def test_close_session(self):
+		session_id = "foobar123"
+		input_message = {'close_session' : session_id}
+		self.controller._sessions[session_id] = mock.Mock()
+		self.controller.close_session(input_message)
+		self.assertTrue(
+			mock.call.close() in self.controller._sessions[session_id].method_calls
+		)
+		
 
 	def test_publish(self):
 		pass
