@@ -57,8 +57,7 @@ class Output(asyncio.Protocol):
         self._outer._on_raw_data_handler(decoded_data)
 
     def _buff_data(self, data):
-        """ Processes data into _data_list
-        """
+        """ Processes data into _data_list"""
         self._data_remainder = self._data_remainder + data
         delimiter_index = self._data_remainder.rfind(self._delimiter)
         while delimiter_index > 0: # >=?
@@ -180,7 +179,6 @@ class MotorController(object):
 
 # PRIVATE
     def _adjust_positions_send(self, code, **kwargs):
-        
         """
         Adjust command positions for slack errors. Save the errors in state variables
         so the positions can be adjusted as received from motorcontroller. Also adjusts 

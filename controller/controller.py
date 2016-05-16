@@ -95,10 +95,9 @@ class Controller():
     def _handshake(self, data):
         """Handles starting and closing sessions"""
         if isinstance(data, dict):
-            data_dict = collections.OrderedDict(json.loads(data.strip(), object_pairs_hook=collections.OrderedDict))
 
-            if 'start_session' in data_dict:
-                if data_dict['session'] in self._sessions:
+            if 'start_session' in data:
+                if data['start_session'] in self._sessions:
                     # log here
                     # publish the session_id
                     self.publish(msg='session_id',params=str(new_session_id))
@@ -106,23 +105,23 @@ class Controller():
                     new_session_id = uuid.uuid4()
                     new_session = Session(new_session_id)
                     self._sessions[new_session_id] = new_session
-                    self._sessions[new_session_id].register_on_discconect(self._on_session_disconnect)
+                    self._sessions[new_session_id].register_on_disconnect(self._on_session_disconnect)
                     self._sessions[new_session_id].connect()
                     # publish the session_id
                     self.publish(msg='session_id',params=str(new_session_id))
                     
 
-            if 'close_session' in data_dict:
-                if data_dict['close_session'] in self._sessions:
-                    self._sessions[data_dict['close_session']].close()
+            if 'close_session' in data:
+                if data['close_session'] in self._sessions:
+                    self._sessions[data['close_session']].close()
 
 
     def _make_connection(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
         try:
-            
+
             #yield from 
                 #asyncio.ensure_future(
-            self._transport, self._transport = \
+            self._transport, self._protocol = \
                 self._loop.run_until_complete(
                                         self._loop.create_connection(
                                                                     self._transport_factory,
@@ -187,7 +186,7 @@ class Controller():
 
 
     def test_handshake(self, data):
-        pass
+        self._handshake(self, data)
         
             
 

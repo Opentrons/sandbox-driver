@@ -5,20 +5,61 @@
 # https://github.com/python/asyncio/blob/master/tests/test_base_events.py
 
 import unittest
+from unittest import Mock
+
 from controller.controller import Controller
 
 
-class ControllerTestCase(unittest.TestCase):
+class ControllerTest(unittest.TestCase):
 
-	def assertSomething(self):
-		pass
-
-
-class ControllerTest(ControllerTestCase):
+	def get_free_address(self):
+		sock = socket.socket()
+		sock.bind(('127.0.0.1', 0))
+		address = sock.getsockname()
+		sock.close()
+		return address
+		
 
 	def setUp(self):
-		self.ctrl = Controller()
-		pass
+		self.loop = asyncio.new_event_loop()
+		asyncio.set_event_loop(None)
+
+		self.addr = self.get_free_address()
+
+		self.server = self.loop.run_until_complete(
+			asyncio.start_server(
+				self.handle_client_callback,
+				host=self.addr[0],
+				port=self.addr[1],
+				loop=self.loop
+			)
+		)
+		self.controller = Controller()
+
+	def test_handshake_with_valid_msg(self):
+		input_message = 'start_sessionFooBar'
+
+		self.controller.publish = Mock()
+
+		self.controller.handshake(input_message)
+
+		self.assertEqual(1, length(sessions.items()))
+		
+		session_id, sessions_obj = sessions.items()[0]
+
+		self.assertTrue(isinstance(sessions_obj, Session))
+
+	# def test_handshake_with_invalid_msg(self):
+	# 	input_message = 'start_sessionFooBar'
+
+	# 	self.controller.handshake(input_message)
+
+	# 	self.assertEqual(1, length(sessions.items()))
+		
+	# 	session_id, sessions_obj = sessions.items()[0]
+
+	# 	self.assertTrue(isinstance(sessions_obj, Session))
+		
 
 
 	def test_connect(self):

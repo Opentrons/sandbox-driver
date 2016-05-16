@@ -58,14 +58,10 @@ class SessionTest(SessionTestCase):
 												 client_writer))
 
 	def setUp(self):
-		print()
-		print('setUp')
 		sock = socket.socket()
 		sock.bind(('127.0.0.1', 0))
 		self.loop = asyncio.new_event_loop()
-		#asyncio.set_event_loop(None)
 		self.addr = sock.getsockname()
-		print('addr=',self.addr)
 		sock.close()
 		self.server = self.loop.run_until_complete(
 													asyncio.start_server(self.handle_client_callback,

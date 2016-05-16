@@ -20,7 +20,7 @@ _motor_controller = None
 
 
 class WampComponent(wamp.ApplicationSession):
-    """WAMP application session for Controller"""
+    """WAMP application session for Session"""
 
 
     def onConnect(self):
