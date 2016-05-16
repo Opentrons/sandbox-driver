@@ -9,7 +9,8 @@ import socket
 import unittest
 from unittest import mock
 
-from controller.controller import Controller
+from controller import Controller
+from session import Session
 
 
 class ControllerTest(unittest.TestCase):
@@ -38,20 +39,26 @@ class ControllerTest(unittest.TestCase):
 		# )
 		self.controller = Controller()
 
-	def test_handshake_with_valid_msg(self):
+	def test_start_session(self):
 		input_message = {'start_session' : ""}
-
+		self.controller.connect_session = mock.Mock()
 		self.controller.publish = mock.Mock()
 
-		self.controller._handshake(input_message)
+		self.controller.start_session(input_message)
 
 		sessions = self.controller._sessions
 
 		self.assertEqual(1, len(sessions.items()))
 		
-		session_id, sessions_obj = sessions.items()[0]
+		session_id, sessions_obj = list(sessions.items())[0]
 
 		self.assertTrue(isinstance(sessions_obj, Session))
+		self.assertTrue(self.controller.publish.called)
+		self.assertTrue(self.controller.connect_session.called)
+
+
+	def test_publish(self):
+		pass
 
 	# def test_handshake_with_invalid_msg(self):
 	# 	input_message = 'start_sessionFooBar'

@@ -33,15 +33,15 @@ class WampComponent(wamp.ApplicationSession):
             # log here
 
 
-        def handshake(data):
-            """Hook for factory to call _handshake"""
-            try:
-                self.factory._handshake(data)
-            except AttributeError:
-                pass
-                # log here
+        # def handshake(data):
+        #     """Hook for factory to call _handshake"""
+        #     try:
+        #         self.factory._handshake(data)
+        #     except AttributeError:
+        #         pass
+        #         # log here
 
-        yield from self.subscribe(handshake, 'com.opentrons.driver_controller')
+        yield from self.subscribe(self.handle_message, 'com.opentrons.driver_controller')
     
 
     def onLeave(self, details):
@@ -91,6 +91,29 @@ class Controller():
         self._transport = None
         self._protocol = None
 
+    def handle_message(self, message):
+        if isinstance(message, dict):
+            if 'start_session' in message:
+                self.start_session(message)
+
+            if 'close_session' in message:
+                self.close_session(message)
+
+    def start_session(self, message):
+        new_session_id = str(uuid.uuid4())
+        new_session = Session(new_session_id)
+        
+        self._sessions[new_session_id] = new_session
+        self._sessions[new_session_id].register_on_disconnect(
+            self._on_session_disconnect
+        )
+        self.connect_session(new_session)
+
+        # publish the session_id
+        self.publish(msg='session_id',params=str(new_session_id))
+
+    def connect_session(self, session):
+        session.connect()
 
     def _handshake(self, data):
         """Handles starting and closing sessions"""
