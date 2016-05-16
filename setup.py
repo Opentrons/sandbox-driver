@@ -13,7 +13,7 @@ config = {
 		'coverage',
 		'autobahn'
 	],
-	'packages': ['driver'],
+	'packages': ['driver','tests','controller','session'],
 	'scripts': ['./bin/driver-test'],
 	'name': 'driver'
 }
