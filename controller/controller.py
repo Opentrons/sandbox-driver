@@ -70,13 +70,14 @@ class WampComponent(wamp.ApplicationSession):
 class Controller():
 
     # dictionary to hold sessions by session_id
-    _sessions = {}
 
     url_topic = 'driver.controller'
 
     def __init__(self):
 
         # setup session factory for crossbar communication
+        self._sessions = {}
+
         self._transport_factory = None
         self._session_factory = wamp.ApplicationSessionFactory()
         self._session_factory.session = WampComponent
@@ -111,6 +112,9 @@ class Controller():
 
         # publish the session_id
         self.publish(msg='session_id',params=str(new_session_id))
+
+    def close_session(self, message):
+        pass
 
     def connect_session(self, session):
         session.connect()

@@ -39,6 +39,19 @@ class ControllerTest(unittest.TestCase):
 		# )
 		self.controller = Controller()
 
+	def test_handle_message(self):
+		start_session_message = {'start_session' : ""}
+		close_session_message = {'close_session' : ""}
+
+		self.controller.start_session = mock.Mock()
+		self.controller.close_session = mock.Mock()
+
+		self.controller.handle_message(start_session_message)
+		self.controller.handle_message(close_session_message)
+
+		self.assertEqual(1, self.controller.start_session.call_count)
+		self.assertEqual(1, self.controller.close_session.call_count)
+
 	def test_start_session(self):
 		input_message = {'start_session' : ""}
 		self.controller.connect_session = mock.Mock()
