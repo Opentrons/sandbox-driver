@@ -103,7 +103,7 @@ class Controller():
                     self.publish(msg='session_id',params=str(new_session_id))
                 else:
                     new_session_id = uuid.uuid4()
-                    new_session = Session(new_session_id)
+                    new_session = Session(str(new_session_id))
                     self._sessions[new_session_id] = new_session
                     self._sessions[new_session_id].register_on_disconnect(self._on_session_disconnect)
                     self._sessions[new_session_id].connect()

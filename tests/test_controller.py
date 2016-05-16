@@ -4,8 +4,10 @@
 # http://python-mock.sourceforge.net/
 # https://github.com/python/asyncio/blob/master/tests/test_base_events.py
 
+import asyncio
+import socket
 import unittest
-from unittest import Mock
+from unittest import mock
 
 from controller.controller import Controller
 
@@ -22,28 +24,30 @@ class ControllerTest(unittest.TestCase):
 
 	def setUp(self):
 		self.loop = asyncio.new_event_loop()
-		asyncio.set_event_loop(None)
+		# asyncio.set_event_loop(None)
 
-		self.addr = self.get_free_address()
+		# self.addr = self.get_free_address()
 
-		self.server = self.loop.run_until_complete(
-			asyncio.start_server(
-				self.handle_client_callback,
-				host=self.addr[0],
-				port=self.addr[1],
-				loop=self.loop
-			)
-		)
+		# self.server = self.loop.run_until_complete(
+		# 	asyncio.start_server(
+		# 		self.handle_client_callback,
+		# 		host=self.addr[0],
+		# 		port=self.addr[1],
+		# 		loop=self.loop
+		# 	)
+		# )
 		self.controller = Controller()
 
 	def test_handshake_with_valid_msg(self):
-		input_message = 'start_sessionFooBar'
+		input_message = {'start_session' : ""}
 
-		self.controller.publish = Mock()
+		self.controller.publish = mock.Mock()
 
-		self.controller.handshake(input_message)
+		self.controller._handshake(input_message)
 
-		self.assertEqual(1, length(sessions.items()))
+		sessions = self.controller._sessions
+
+		self.assertEqual(1, len(sessions.items()))
 		
 		session_id, sessions_obj = sessions.items()[0]
 

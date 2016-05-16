@@ -83,7 +83,7 @@ _sessions = {}
 
 class Session():
 
-    def __init__(self, session_id, driver=None):
+    def __init__(self, session_id : str, driver=None):
 
         global _motor_controller
         # what session am I?
