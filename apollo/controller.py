@@ -209,14 +209,6 @@ class Controller():
         return message, self.url_topic
 
 
-    def test_handshake(self, data):
-        self._handshake(self, data)
-        
-            
-
-
-
-
 if __name__ == '__main__':
 
     try:

@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+from apollo import controller
+
+
+try:
+	c = controller.Controller()
+	c.connect()
+except EOFError:
+	pass

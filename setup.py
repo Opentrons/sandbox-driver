@@ -14,7 +14,7 @@ config = {
 		'autobahn'
 	],
 	'packages': ['driver','tests','controller','session'],
-	'scripts': ['./bin/driver-test'],
+	'bin': ['./bin/driver-test'],
 	'name': 'driver'
 }
 

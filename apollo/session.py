@@ -7,7 +7,7 @@ import os
 
 from autobahn.asyncio import wamp, websocket
 
-from apollo.driver.motor_controller import MotorController
+from apollo.motor_controller import MotorController
 
 
 _motor_controller = None
