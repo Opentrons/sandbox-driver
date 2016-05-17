@@ -37,7 +37,7 @@ class SessionTest(unittest.TestCase):
 
         self.addr = utils.get_free_os_address()
 
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(None)
 
         self.server = self.loop.run_until_complete(
