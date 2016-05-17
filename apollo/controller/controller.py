@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 
-from session.session import Session
-import collections
-import uuid
 import asyncio
 import datetime
 import os
+import json
 import time
+import uuid
+
 from autobahn.asyncio import wamp, websocket
-from autobahn.asyncio.wamp import ApplicationSession
+
+from apollo.session import Session
 
 
 class WampComponent(wamp.ApplicationSession):

@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 
-import json
-import collections
 import asyncio
 import datetime
-import uuid
+import json
 import os
 
-from driver.motor_controller import MotorController
-
 from autobahn.asyncio import wamp, websocket
-from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
+
+from apollo.driver.motor_controller import MotorController
 
 
 _motor_controller = None

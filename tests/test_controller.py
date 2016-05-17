@@ -9,8 +9,8 @@ import socket
 import unittest
 from unittest import mock
 
-from controller import Controller
-from session import Session
+from apollo.controller import Controller
+from apollo.session import Session
 
 
 class ControllerTest(unittest.TestCase):
