@@ -5,22 +5,16 @@
 # https://github.com/python/asyncio/blob/master/tests/test_base_events.py
 
 import asyncio
-import socket
 import unittest
 from unittest import mock
 
 from apollo.controller import Controller
 from apollo.session import Session
+from tests import socket
 
 
 class ControllerTest(unittest.TestCase):
 
-	def get_free_address(self):
-		sock = socket.socket()
-		sock.bind(('127.0.0.1', 0))
-		address = sock.getsockname()
-		sock.close()
-		return address
 		
 
 	def setUp(self):

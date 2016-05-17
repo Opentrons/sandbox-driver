@@ -17,7 +17,6 @@ class CommandQueue(object):
 
     Commands are retrieved FIFO with next(), moving the "current_command" being processed
     to "completed" and returning the .
-
     """
 
     def __init__(self):

@@ -134,12 +134,12 @@ class Session():
         try:
             #yield from asyncio.ensure_future(
             self._transport, self._protocol = self._loop.run_until_complete(
-                                                self._loop.create_connection(
-                                                                            self._transport_factory, 
-                                                                            host=crossbar_host, 
-                                                                            port=crossbar_port
-                                                                        )
-                                                )
+                self._loop.create_connection(
+                    self._transport_factory,
+                    host=crossbar_host,
+                    port=crossbar_port
+                )
+            )
 #                                                                            )
         except:
             raise
@@ -169,7 +169,7 @@ class Session():
         if isinstance(message, dict):
             if 'data' in message:
                 data_dict = message['data']
-                command, params = data_dict.items()[0]
+                command, params = list(data_dict.items())[0]
                 return_message = {'command': command, 'params': params}
                 return return_message
         return None

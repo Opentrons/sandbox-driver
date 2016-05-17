@@ -2,8 +2,9 @@
 import asyncio
 import copy
 import json
-import uuid
-import datetime
+import os
+
+from apollo import command_queue
 
 """
 TODO:
@@ -115,7 +116,7 @@ class MotorController(object):
 
         # list of commands, commands are dictionaries with format:
         # { SESSION_ID, WHERE_FROM, CODE, ARGS }
-        self._cmd_q = CommandQueue()
+        self._cmd_q = command_queue.CommandQueue()
 
         # hold Output protocol object for tcp communication with network connection to moto-controller
         self._output = None
