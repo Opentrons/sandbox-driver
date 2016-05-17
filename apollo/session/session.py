@@ -148,15 +148,15 @@ class Session():
 
     def handle_message(self, message):
         """First normalize the message and then send to motor-controller """
-        nom_message = self._normalize_message(message)
+        norm_message = self._normalize_message(message)
         method = None
-        if nom_message:
+        if norm_message:
             method = getattr(self._motor_controller, norm_message.command)
             if not method:
                 raise KeyError("Command not found.")
             else:
                 method(norm_message.params)
-        return nom_message, method
+        return norm_message, method
 
 
     def _normalize_message(self, message, **kwargs):
@@ -208,10 +208,10 @@ class Session():
                 message = {'time': time_string, 'session_id':self._session_id, 'data': {msg: params}}
                 self._session_factory._myAppSession.publish(self._url_topic, json.dumps(message))
             else:
-                raise
+                raise Exception()
                 # log here
         else:
-            raise
+            raise Exception()
             # log here
         return message, self._url_topic
 

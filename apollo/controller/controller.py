@@ -198,13 +198,13 @@ class Controller():
         if self._session_factory and msg and params:
             if self._session_factory._myAppSession:
                 time_string = str(datetime.datetime.utcnow())
-                message = {'time': time_string, 'session_id':session_id, 'data': {msg: param}}
+                message = {'time': time_string, 'session_id':session_id, 'data': {msg: params}}
                 self._session_factory._myAppSession.publish(self.url_topic, json.dumps(message))
             else:
-                raise
+                raise Exception()
                 # log here
         else:
-            raise
+            raise Exception()
             # log here
         return message, self.url_topic
 
