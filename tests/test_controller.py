@@ -10,18 +10,16 @@ from unittest import mock
 
 from apollo.controller import Controller
 from apollo.session import Session
-from tests import socket
 
 
 class ControllerTest(unittest.TestCase):
 
-		
 
 	def setUp(self):
 		self.loop = asyncio.new_event_loop()
 		# asyncio.set_event_loop(None)
 
-		# self.addr = self.get_free_address()
+		# self.addr = jkb.get_free_address()
 
 		# self.server = self.loop.run_until_complete(
 		# 	asyncio.start_server(

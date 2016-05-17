@@ -80,7 +80,7 @@ _sessions = {}
 
 class Session():
 
-    def __init__(self, session_id : str, driver=None):
+    def __init__(self, session_id : str, loop=None, driver=None):
 
         global _motor_controller
         # what session am I?
@@ -96,7 +96,7 @@ class Session():
         self._session_factory.session = WampComponent
         self._session_factory._myAppSession = None
 
-        self._loop = asyncio.get_event_loop()
+        self._loop = loop or asyncio.get_event_loop()
 
         self._transport = None
         self._protocol = None

@@ -10,8 +10,8 @@ import asyncio
 import os
 import datetime
 
+from apollo import utils
 from apollo.session import Session
-from tests import socket
 
 
 session_id = str(uuid.uuid4())
@@ -26,40 +26,38 @@ crossbar_port = os.environ.get('CROSSBAR_PORT', 8080)
 
 
 class SessionTest(unittest.TestCase):
-    addr = []
-    test_session_id = 'test_session_id'
-    test_message_1 = {
-        'time': str(datetime.datetime.utcnow()),
-        'session_id': test_session_id,
-        'data': {'move': {'x': 123.456, 'y': 7.89}}
-    }
+    def setUp(self):
+        self.test_session_id = 'test_session_id'
+        self.test_message_1 = {
+            'time': str(datetime.datetime.utcnow()),
+            'session_id': self.test_session_id,
+            'data': {'move': {'x': 123.456, 'y': 7.89}}
+        }
 
-    @asyncio.coroutine
-    def handle_client(self, client_reader, client_writer):
-        data = yield from client_reader.readline()
-        client_writer.write(data)
-        yield from client_writer.drain()
-        client_writer.close()
+        self.addr = utils.get_free_os_address()
+
+        self.loop = asyncio.get_event_loop()
+        asyncio.set_event_loop(None)
+
+        # self.server = self.loop.run_until_complete(
+        #     asyncio.start_server(
+        #         self.handle_client_callback,
+        #         host=self.addr[0], port=self.addr[1],
+        #         loop=self.loop
+        #     )
+        # )
+        self.sesh = Session(session_id, self.loop)
+
 
     def handle_client_callback(self, client_reader, client_writer):
-        self.loop.create_task(self.handle_client(client_reader,
-                                                 client_writer))
+        @asyncio.coroutine
+        def handle_client(client_reader, client_writer):
+            data = yield from client_reader.readline()
+            client_writer.write(data)
+            yield from client_writer.drain()
+            client_writer.close()
 
-    def setUp(self):
-        sock = socket.socket()
-        sock.bind(('127.0.0.1', 0))
-        self.loop = asyncio.new_event_loop()
-        self.addr = sock.getsockname()
-        sock.close()
-        self.server = self.loop.run_until_complete(
-            asyncio.start_server(
-                self.handle_client_callback,
-                host=self.addr[0], port=self.addr[1],
-                loop=self.loop
-            )
-        )
-        self.sesh = Session(session_id)
-
+        self.loop.create_task(handle_client(client_reader, client_writer))
 
     def tearDown(self):
         if self.server is not None:
