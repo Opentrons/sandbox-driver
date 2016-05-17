@@ -5,6 +5,8 @@ import collections
 import uuid
 import asyncio
 import datetime
+import os
+import time
 from autobahn.asyncio import wamp, websocket
 from autobahn.asyncio.wamp import ApplicationSession
 
@@ -41,7 +43,7 @@ class WampComponent(wamp.ApplicationSession):
         #         pass
         #         # log here
 
-        yield from self.subscribe(self.handle_message, 'com.opentrons.driver_controller')
+        yield from self.subscribe(self.factory.handle_message, 'com.opentrons.driver_controller')
     
 
     def onLeave(self, details):
@@ -64,7 +66,6 @@ class WampComponent(wamp.ApplicationSession):
         except AttributeError:
             pass
             # log here
-
 
 
 class Controller():
@@ -91,6 +92,10 @@ class Controller():
 
         self._transport = None
         self._protocol = None
+
+        self.crossbar_host = None
+        self.crossbar_port = None
+
 
     def handle_message(self, message):
         if isinstance(message, dict):
@@ -120,19 +125,26 @@ class Controller():
     def connect_session(self, session):
         session.connect()
 
-    def _make_connection(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
+    def _make_connection(
+        self,
+        url_protocol='ws',
+        url_domain='0.0.0.0',
+        url_port=8080,
+        url_path='ws',
+        debug=False,
+        debug_wamp=False
+    ):
         try:
-
             #yield from 
                 #asyncio.ensure_future(
             self._transport, self._protocol = \
                 self._loop.run_until_complete(
-                                        self._loop.create_connection(
-                                                                    self._transport_factory,
-                                                                    host=crossbar_host,
-                                                                    port=crossbar_port
-                                                                    )
-                                    )
+                    self._loop.create_connection(
+                        self._transport_factory,
+                        host=self.crossbar_host,
+                        port=self.crossbar_port
+                    )
+                )
         except:
             raise
             # log here
@@ -141,28 +153,35 @@ class Controller():
     def connect(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
         if self._transport_factory is None:
             
-            crossbar_host = os.environ.get('CROSSBAR_HOST', url_domain)
-            crossbar_port = os.environ.et('CROSSBAR_PORT', url_port)
+            self.crossbar_host = os.environ.get('CROSSBAR_HOST', url_domain)
+            self.crossbar_port = os.environ.get('CROSSBAR_PORT', url_port)
 
-            url = url_protocol+'://'+crossbar_host+':'+str(crossbar_port)+'/'+url_path
+            url = "{url_protocol}://{host}:{port}/{path}".format(
+                url_protocol=url_protocol,
+                host=self.crossbar_host,
+                port=self.crossbar_port,
+                path=url_path
+            )
 
-            self._transport_factory = websocket.WampWebSocketClientFactory(self.session_factory,
-                                                                            url=url,
-                                                                            debug=debug,
-                                                                            debug_wamp=debug_wamp)
+            self._transport_factory = websocket.WampWebSocketClientFactory(
+                self._session_factory,
+                url=url
+                # debug=debug
+                # debug_wamp=debug_wamp
+            )
 
         # Add factory callbacks for WampComponent
-        self.session_factory._handshake = self.handshake
-        self.session_factory._dispatch_message = self.dispatch_message
+        self._session_factory.handle_message = self.handle_message
 
             
-        while self._session_factor._crossbar_connected == False:
+        while self._session_factory._crossbar_connected == False:
             try:
-                self._make_connection(url_domain=crossbar_host, url_port=crossbar_port)
+                print('trying ',str(self.crossbar_host),' and ',str(self.crossbar_port))
+                self._make_connection(url_domain=self.crossbar_host, url_port=self.crossbar_port)
             except KeyboardInterrupt:
                 self._session_factory._crossbar_connected = True
             except:
-                pass
+                raise
                 # log here
             finally:
                 time.sleep(6)
@@ -196,8 +215,16 @@ class Controller():
 
 
 
-    
-        
+
+if __name__ == '__main__':
+
+    try:
+        controller = Controller()
+        controller.connect()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print('QUITTING!')
 
 
 
