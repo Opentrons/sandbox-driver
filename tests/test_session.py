@@ -4,11 +4,12 @@
 # http://python-mock.sourceforge.net/
 # https://github.com/python/asyncio/blob/master/tests/test_base_events.py
 
-import unittest
-import uuid
 import asyncio
-import os
 import datetime
+import os
+import unittest
+from unittest import mock
+import uuid
 
 from apollo import utils
 from apollo.session import Session
@@ -39,14 +40,14 @@ class SessionTest(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
         asyncio.set_event_loop(None)
 
-        # self.server = self.loop.run_until_complete(
-        #     asyncio.start_server(
-        #         self.handle_client_callback,
-        #         host=self.addr[0], port=self.addr[1],
-        #         loop=self.loop
-        #     )
-        # )
-        self.sesh = Session(session_id, self.loop)
+        self.server = self.loop.run_until_complete(
+            asyncio.start_server(
+                self.handle_client_callback,
+                host=self.addr[0], port=self.addr[1],
+                loop=self.loop
+            )
+        )
+        self.session = Session(session_id, self.loop)
 
 
     def handle_client_callback(self, client_reader, client_writer):
@@ -60,46 +61,36 @@ class SessionTest(unittest.TestCase):
         self.loop.create_task(handle_client(client_reader, client_writer))
 
     def tearDown(self):
-        if self.server is not None:
-            self.server.close()
-            self.loop.run_until_complete(self.server.wait_closed())
-            self.server = None
+        self.server.close()
+        self.loop.run_until_complete(self.server.wait_closed())
+        self.server = None
 
     def test_register_on_disconnect(self):
-
-        def my_on_disconnect(session_id):
-            print('Session disconnected')
-            print('by session_id '+session_id)
-
-        self.sesh.register_on_disconnect(my_on_disconnect)
-
-
+        on_disconnect = mock.Mock()
+        self.session.register_on_disconnect(on_disconnect)
+        self.assertEqual(self.session._on_disconnect, on_disconnect)
 
     def test_on_disconnect(self):
+        on_disconnect = mock.Mock()
+        self.session.register_on_disconnect(on_disconnect)
+        self.session.on_disconnect()
+        self.assertTrue(on_disconnect.called)
 
-        def my_on_disconnect(session_id):
-            print('Session disconnected')
-            print('by session_id '+session_id)
+    # def test_close(self):
+    #     self.session.connect(url_domain=self.addr[0], url_port=self.addr[1])
+    #     self.session.close()
+    #     self.assertTrue(True)
 
-        self.sesh.register_on_disconnect(my_on_disconnect)
-        self.sesh.connect(url_domain=self.addr[0], url_port=self.addr[1])
-        self.sesh.close()
+    # def test_publish(self):
+    #     self.session.connect(url_domain=self.addr[0], url_port=self.addr[1])
 
-    def test_close(self):
-        self.sesh.connect(url_domain=self.addr[0], url_port=self.addr[1])
-        self.sesh.close()
-        self.assertTrue(True)
-
-    def test_publish(self):
-        self.sesh.connect(url_domain=self.addr[0], url_port=self.addr[1])
-
-    def test_connect_failure(self):
-        if self.server is not None:
-            self.server.close()
-            self.loop.run_until_complete(self.server.wait_closed())
-            self.server = None
-
-        self.sesh.connect(url_domain=self.addr[0], url_port=self.addr[1])
+    # def test_connect_failure(self):
+    #     if self.server is not None:
+    #         self.server.close()
+    #         self.loop.run_until_complete(self.server.wait_closed())
+    #         self.server = None
+    #
+    #     self.session.connect(url_domain=self.addr[0], url_port=self.addr[1])
 
 if __name__ == '__main__':
     unittest.main()

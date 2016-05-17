@@ -132,7 +132,6 @@ class Session():
         self._session_factory._on_disconnect = self.on_disconnect
 
         try:
-            #yield from asyncio.ensure_future(
             self._transport, self._protocol = self._loop.run_until_complete(
                 self._loop.create_connection(
                     self._transport_factory,
@@ -140,7 +139,6 @@ class Session():
                     port=crossbar_port
                 )
             )
-#                                                                            )
         except:
             raise
             # log here
@@ -178,20 +176,12 @@ class Session():
     def register_on_disconnect(self, callback):
         """Register a callback for handling disconnect."""
         if callable(callback):
-            self._on_disconect = callback
-        return self._on_disconnect
-
+            self._on_disconnect = callback
 
     def on_disconnect(self):
         """Handle disconnect"""
-        if self._on_disconnect:
-            try:
-                self._on_disconnect(self._session_id)
-            except:
-                raise
-                # log here
-        return self._session_id, self._on_disconnect
-
+        if self._on_disconnect and callable(self._on_disconnect):
+            self._on_disconnect(self._session_id)
 
     def close(self):
         """Close this session."""
