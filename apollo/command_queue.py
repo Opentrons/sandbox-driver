@@ -2,6 +2,33 @@ import copy
 import datetime
 import uuid
 
+from collections import deque
+
+
+"""
+Goals:
+ 1. hold command requests
+ 2. add metadata: time
+"""
+
+
+# class CommandQueue(object):
+#     def __init__(self):
+#         self.processed_commands = deque()
+#         self.unprocessed_commands = deque()
+#
+#     def get_submitted_commands_size(self):
+#         return len(self.unprocessed_commands)
+#
+#     def get_unprocessed_command(self):
+#         return self.unprocessed_commands.popleft()
+#
+#     def submit_unprocessed_command(self, command):
+#         self.unprocessed_commands.append(command)
+#
+#     def submit_processed_command(self, command):
+#         self.processed_commands.append(command)
+
 
 class CommandQueue(object):
     """
@@ -21,15 +48,10 @@ class CommandQueue(object):
 
     def __init__(self):
         self._size = 0
-
         self._command_queue = []
-
         self._completed = []
-
         self._current_command = None
-
         self._counter = 0
-
 
     @property
     def size(self):
@@ -38,16 +60,25 @@ class CommandQueue(object):
 
     def add_command(self, command):
         """ Add a command to the queue
+
+        command: {
+            'session_id': '',
+            'code': '',
+            'where_from': '',
+            'args': ''
+        }
         """
         if command is not None:
             self._counter += 1
-            self._command_element = {'uid': uuid.uuid4(),
-                                     'number': self._counter,
-                                     't_add': datetime.datetime.utcnow(),
-                                     't_out': 'na',
-                                     't_com': 'na',
-                                     'command': command,
-                                     'result': 'tbd'}
+            self._command_element = {
+                'uid': uuid.uuid4(),
+                'number': self._counter,
+                't_add': datetime.datetime.utcnow(),
+                't_out': 'na',
+                't_com': 'na',
+                'command': command,
+                'result': 'tbd'
+            }
             self._command_queue.append(self._command_element)
             self._size = len(self._command_queue)
         else:
@@ -74,7 +105,6 @@ class CommandQueue(object):
                 return return_command
             else:
                 return return_command['command']
-
         return None
 
     # @property? read-only getter
@@ -109,11 +139,11 @@ class CommandQueue(object):
         if save_cleared == False:
             self._command_queue = []
         else:
-            for c in self._command_queue: c[
-                't_com'] = datetime.datetime.utcnow()
-            for c in self._command_queue: c['result'] = 'cleared'
+            for c in self._command_queue:
+                c['t_com'] = datetime.datetime.utcnow()
+            for c in self._command_queue:
+                c['result'] = 'cleared'
             self._completed.append(self._command_queue)
             self._command_queue = []
         self._counter = 0
         self._size = 0
-

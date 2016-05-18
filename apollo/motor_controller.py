@@ -643,7 +643,6 @@ class MotorController(object):
         """ Clear the queue, reset the flow control state variables, and take note 
             of the session_id and where_from used to send the command.
         """
-        self._command_queue = []
         self._state_dict['current_command_session_id'] = session_id
         self._state_dict['current_command_where_from'] = where_from
         self._state_dict['ack_ready'] = True
