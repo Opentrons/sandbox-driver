@@ -1,6 +1,7 @@
 import asyncio
 import logging
-
+import json
+import concurrent
 
 logger = logging.getLogger()
 
@@ -43,17 +44,18 @@ logger = logging.getLogger()
 
 
 class SmoothieBoard(object):
-    def __init__(self, host, port, loop):
+    def __init__(self, host, port, loop, feedback=False):
         self.host = host
         self.port = port
         self.loop = loop
+        self.feedback = feedback
 
     def connect(self):
         try:
             reader, writer = yield from asyncio.open_connection(
-                self.host,
-                self.port,
-                self.loop
+                host=self.host,
+                port=self.port,
+                loop=self.loop
             )
         except OSError as e:
             logger.log("foo")
@@ -61,38 +63,73 @@ class SmoothieBoard(object):
 
         self.reader = reader
         self.writer = writer
-
-        yield from self.smoothie_handshake()
+        return (yield from self.smoothie_handshake())
 
     @asyncio.coroutine
     def smoothie_handshake(self):
-        status_dict = yield from self.read()
+        smoothie_ok = [False, False]
+
+        while not (smoothie_ok[0] and smoothie_ok[1]):
+            data = yield from self._read()
+            if data == 'Smoothie':
+                smoothie_ok[0] = True
+            elif data == 'ok':
+                smoothie_ok[1] = True
+
+        return smoothie_ok[0] and smoothie_ok[1]
 
     @asyncio.coroutine
     def send(self, gcode, response_handler):
-        yield from self.writer.write(gcode.encode())
+        self.writer.write(gcode.encode()) 
+        yield from self.writer.drain()
 
-        response_handler.send('start', gcode)
+        if response_handler:
+            response_handler.send('start', gcode)
 
         done = False
         res = []
 
         while not done:
-            data = (yield from self.read())
-            response_handler.send(data)
-
-            res.append(data)
-
-            if data == "stat 0":
+            data = (yield from self._read())
+            if data == None:
                 done = True
+                break
 
-        response_handler.send(None)
+            if response_handler:
+                response_handler.send(data)
 
-        return
+            if not self.feedback:
+                done = True
+                break
+            
+            # check whether JSON/dict format
+            if data.find('{') > 0:
+                # pull out any text data at beginning
+                text = data[:data.find('{')]
+                res.append(text)
+
+                # convert to JSON object
+                jtxt = data[data.find('{'):]
+                res.append(jtxt)
+                jobj = json.loads(jtxt)
+
+                # check whether has "stat" and value if so
+                if 'stat' in jobj:
+                    if jobj['stat'] == 0:
+                        done = True
+
+        if response_handler:
+            response_handler.send(None)
+
+        return res
 
     @asyncio.coroutine
     def _read(self):
-        return (yield from asyncio.wait_for(self.reader.readline(), timeout=2))
+        try:
+            data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
+            return data.decode().strip()
+        except concurrent.futures.TimeoutError:
+            return None
 
     def is_ready(self):
         return self.status == "ok"
