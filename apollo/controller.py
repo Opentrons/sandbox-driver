@@ -75,7 +75,7 @@ class Controller():
 
     url_topic = 'driver.controller'
 
-    def __init__(self):
+    def __init__(self, crossbar_host='localhost', crossbar_port=8080):
 
         # setup session factory for crossbar communication
         self._sessions = {}
@@ -94,17 +94,14 @@ class Controller():
         self._transport = None
         self._protocol = None
 
-        self.crossbar_host = None
-        self.crossbar_port = None
+        self.crossbar_host = crossbar_host
+        self.crossbar_port = crossbar_port
 
-    def connect(self, url_protocol='ws', host='0.0.0.0', port=8080, url_path='ws', debug=False, debug_wamp=False):
+    def connect(self, url_path='ws'):
         if self._transport_factory is None:
+            URL_TEMPLATE = "ws://{host}:{port}/{path}"
 
-            self.crossbar_host = os.environ.get('CROSSBAR_HOST', host)
-            self.crossbar_port = os.environ.get('CROSSBAR_PORT', port)
-
-            url = "{url_protocol}://{host}:{port}/{path}".format(
-                url_protocol=url_protocol,
+            url = URL_TEMPLATE.format(
                 host=self.crossbar_host,
                 port=self.crossbar_port,
                 path=url_path
@@ -113,8 +110,6 @@ class Controller():
             self._transport_factory = websocket.WampWebSocketClientFactory(
                 self._session_factory,
                 url=url
-                # debug=debug
-                # debug_wamp=debug_wamp
             )
 
         # Add factory callbacks for WampComponent
