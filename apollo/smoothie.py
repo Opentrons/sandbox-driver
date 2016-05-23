@@ -3,7 +3,9 @@ import logging
 import json
 import concurrent
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
+
 
 # smoothie = SmoothieTalker()
 # smoothie.connect()
@@ -43,12 +45,27 @@ logger = logging.getLogger()
 
 
 
-class SmoothieBoard(object):
+class SmoothieCom(object):
     def __init__(self, host, port, loop, feedback=False):
         self.host = host
         self.port = port
         self.loop = loop
-        self.feedback = feedback
+        self._feedback=feedback
+
+    @property
+    def feedback(self):
+        return self._feedback
+
+    @feedback.setter
+    def feedback(self, value):
+        if isinstance(value, bool):
+            self._feedback = value
+
+    def feedback_on(self):
+        self._feedback = True
+
+    def feedback_off(self):
+        self._feedback = False
 
     def connect(self):
         try:
@@ -58,8 +75,9 @@ class SmoothieBoard(object):
                 loop=self.loop
             )
         except OSError as e:
-            logger.log("foo")
-            raise e
+            logger.info("Did not connect")
+            #raise e
+            return False
 
         self.reader = reader
         self.writer = writer
