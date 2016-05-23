@@ -165,8 +165,6 @@ class Controller():
 
     def _make_connection(self):
         try:
-            #yield from 
-                #asyncio.ensure_future(
             self._transport, self._protocol = \
                 self._loop.run_until_complete(
                     self._loop.create_connection(
