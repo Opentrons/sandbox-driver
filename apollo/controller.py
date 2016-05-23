@@ -97,6 +97,43 @@ class Controller():
         self.crossbar_host = None
         self.crossbar_port = None
 
+    def connect(self, url_protocol='ws', host='0.0.0.0', port=8080, url_path='ws', debug=False, debug_wamp=False):
+        if self._transport_factory is None:
+
+            self.crossbar_host = os.environ.get('CROSSBAR_HOST', host)
+            self.crossbar_port = os.environ.get('CROSSBAR_PORT', port)
+
+            url = "{url_protocol}://{host}:{port}/{path}".format(
+                url_protocol=url_protocol,
+                host=self.crossbar_host,
+                port=self.crossbar_port,
+                path=url_path
+            )
+
+            self._transport_factory = websocket.WampWebSocketClientFactory(
+                self._session_factory,
+                url=url
+                # debug=debug
+                # debug_wamp=debug_wamp
+            )
+
+        # Add factory callbacks for WampComponent
+        self._session_factory.handle_message = self.handle_message
+
+
+        while self._session_factory._crossbar_connected == False:
+            try:
+                print('trying ',str(self.crossbar_host),' and ',str(self.crossbar_port))
+                self._make_connection(url_domain=self.crossbar_host, url_port=self.crossbar_port)
+            except KeyboardInterrupt:
+                self._session_factory._crossbar_connected = True
+            except:
+                raise
+                # log here
+            finally:
+                time.sleep(6)
+
+
 
     def handle_message(self, message):
         if isinstance(message, dict):
@@ -126,15 +163,7 @@ class Controller():
     def connect_session(self, session):
         session.connect()
 
-    def _make_connection(
-        self,
-        url_protocol='ws',
-        url_domain='0.0.0.0',
-        url_port=8080,
-        url_path='ws',
-        debug=False,
-        debug_wamp=False
-    ):
+    def _make_connection(self):
         try:
             #yield from 
                 #asyncio.ensure_future(
@@ -149,44 +178,6 @@ class Controller():
         except:
             raise
             # log here
-
-
-    def connect(self, url_protocol='ws', url_domain='0.0.0.0', url_port=8080, url_path='ws', debug=False, debug_wamp=False):
-        if self._transport_factory is None:
-            
-            self.crossbar_host = os.environ.get('CROSSBAR_HOST', url_domain)
-            self.crossbar_port = os.environ.get('CROSSBAR_PORT', url_port)
-
-            url = "{url_protocol}://{host}:{port}/{path}".format(
-                url_protocol=url_protocol,
-                host=self.crossbar_host,
-                port=self.crossbar_port,
-                path=url_path
-            )
-
-            self._transport_factory = websocket.WampWebSocketClientFactory(
-                self._session_factory,
-                url=url
-                # debug=debug
-                # debug_wamp=debug_wamp
-            )
-
-        # Add factory callbacks for WampComponent
-        self._session_factory.handle_message = self.handle_message
-
-            
-        while self._session_factory._crossbar_connected == False:
-            try:
-                print('trying ',str(self.crossbar_host),' and ',str(self.crossbar_port))
-                self._make_connection(url_domain=self.crossbar_host, url_port=self.crossbar_port)
-            except KeyboardInterrupt:
-                self._session_factory._crossbar_connected = True
-            except:
-                raise
-                # log here
-            finally:
-                time.sleep(6)
-
 
     def _on_session_disconnect(self, session_id):
         """Delete session_id"""
