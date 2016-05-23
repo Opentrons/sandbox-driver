@@ -174,7 +174,7 @@ class Controller():
                     )
                 )
         except:
-            raise
+            raise Exception("Error creating connection")
             # log here
 
     def _on_session_disconnect(self, session_id):
