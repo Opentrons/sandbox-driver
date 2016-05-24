@@ -2,17 +2,22 @@
 
 import asyncio
 import datetime
-import os
 import json
+import logging
 import time
+import traceback
 import uuid
 
 from autobahn.asyncio import wamp, websocket
+from autobahn.asyncio.wamp import ApplicationRunner
 
 from apollo.session import Session
 
 
-class WampComponent(wamp.ApplicationSession):
+logger = logging.getLogger()
+
+
+class ControllerComponent(wamp.ApplicationSession):
     """WAMP application session for Controller"""
 
 
@@ -82,7 +87,7 @@ class Controller():
 
         self._transport_factory = None
         self._session_factory = wamp.ApplicationSessionFactory()
-        self._session_factory.session = WampComponent
+        self._session_factory.session = ControllerComponent
         self._session_factory._myAppSession = None
 
         # track whether connected to crossbar for deciding whether to continue
@@ -119,11 +124,23 @@ class Controller():
         while self._session_factory._crossbar_connected == False:
             try:
                 print('trying ',str(self.crossbar_host),' and ',str(self.crossbar_port))
-                self._make_connection(url_domain=self.crossbar_host, url_port=self.crossbar_port)
+                print('foo')
+                coro = self._loop.create_connection(
+                    self._transport_factory,
+                    self.crossbar_host,
+                    self.crossbar_port
+                )
+                transport, protocol = self._loop.run_until_complete(coro)
+
+                self._transport = transport
+                self._protocol = protocol
+
             except KeyboardInterrupt:
                 self._session_factory._crossbar_connected = True
-            except:
-                raise
+            except Exception as e:
+                print(e)
+                traceback.print_exc()
+
                 # log here
             finally:
                 time.sleep(6)
@@ -160,17 +177,12 @@ class Controller():
 
     def _make_connection(self):
         try:
-            self._transport, self._protocol = \
-                self._loop.run_until_complete(
-                    self._loop.create_connection(
-                        self._transport_factory,
-                        host=self.crossbar_host,
-                        port=self.crossbar_port
-                    )
-                )
-        except:
-            raise Exception("Error creating connection")
-            # log here
+
+            import pdb; pdb.set_trace()
+        except Exception as e:
+            logger.error("Error creating connection")
+
+            raise e
 
     def _on_session_disconnect(self, session_id):
         """Delete session_id"""
