@@ -24,11 +24,18 @@ class SmoothieCom(object):
         except OSError as e:
             logger.error("Did not connect")
             raise e
-            # return False
 
         self.reader = reader
         self.writer = writer
         return (yield from self.smoothie_handshake())
+
+    def get_delimited_gcode(self, gcode):
+        """
+        # Add delimiter to gcode for Smoothie board
+        """
+        return gcode.strip() + '\r\n'
+
+
 
     @asyncio.coroutine
     def smoothie_handshake(self):
@@ -38,29 +45,26 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def send(self, gcode, response_handler):
-
-
-        # Turn on feedback
         yield from self.turn_on_feedback()
 
-        gcode = gcode.strip()
-        delimiter = '\r\n'
+        delimited_gcode = self.get_delimited_gcode(gcode)
 
-        # Add delimiter to gcode for Smoothie board
-        delimited_gcode = gcode.strip() + delimiter
-
+        # TODO: refactor into write and drain method coro
         self.writer.write(delimited_gcode.encode('utf-8'))
         yield from self.writer.drain()
 
+        # TODO: Make this async?
         if response_handler:
             response_handler.send('start', gcode)
 
-        is_gcode_done = False
 
+        is_gcode_done = False
         data_as_json = None
 
         while True:
             response = (yield from self._read())
+
+            # TODO: do proper logging and remove print statements
             print('response is', response)
 
             # Handle M114 GCode
@@ -90,11 +94,6 @@ class SmoothieCom(object):
         yield from self.turn_off_feedback()
 
         return data_as_json
-
-        #if response_handler:
-        #    response_handler.send(None)
-
-
 
     @asyncio.coroutine
     def turn_on_feedback(self):
@@ -128,9 +127,6 @@ class SmoothieCom(object):
             print('Timeout Error')
             return None
 
-    def is_ready(self):
-        return self.status == "ok"
-
 
 @asyncio.coroutine
 def repl(smc):
@@ -140,7 +136,7 @@ def repl(smc):
         print(res)
 
 if __name__ == '__main__':
-    smc = SmoothieCom('localhost',3335)
+    smc = SmoothieCom('localhost', 3335)
     loop = asyncio.get_event_loop()
     res = loop.run_until_complete(smc.connect())
     if res:
