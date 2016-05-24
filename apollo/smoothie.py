@@ -7,65 +7,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
-# smoothie = SmoothieTalker()
-# smoothie.connect()
-#
-# smoothie.send("gcode")
-# res = smoothie.get()
-#
-#
-# q = []
-#
-#
-# while True:
-#     res = yield smoothie.read()
-#     print(res)
-#
-#     q.append(input())
-#
-#     while q:
-#         if smoothie.is_ready():
-#             yield smoothie.send(q.pop(0))
-#             print(yield from smoothie.read())
-#         else:
-#             cnt += 1
-#             sleep(1)
-#
-#
-# class SmoothieTestCase(...)
-#     def test_send(self):
-#         smoothie.transport.write = Mock(return_value={stat: ok})
-#         smoothie.send()
-#
-#         assert smoothie.transport.write.called == True
-#
-#     def read(self):
-#         pass
-#
-
-
-
 class SmoothieCom(object):
-    def __init__(self, host, port, loop, feedback=False):
+    def __init__(self, host, port, loop=None, is_feedback_enabled=False):
         self.host = host
         self.port = port
-        self.loop = loop
-        self._feedback=feedback
-
-    @property
-    def feedback(self):
-        return self._feedback
-
-    @feedback.setter
-    def feedback(self, value):
-        if isinstance(value, bool):
-            self._feedback = value
-
-    def feedback_on(self):
-        self._feedback = True
-
-    def feedback_off(self):
-        self._feedback = False
+        self.loop = loop or asyncio.get_event_loop()
+        self.is_feedback_enabled = is_feedback_enabled
 
     def connect(self):
         try:
@@ -75,7 +22,7 @@ class SmoothieCom(object):
                 loop=self.loop
             )
         except OSError as e:
-            logger.info("Did not connect")
+            logger.error("Did not connect")
             #raise e
             return False
 
@@ -85,20 +32,19 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def smoothie_handshake(self):
-        smoothie_ok = [False, False]
+        has_smoothie = False
+        has_ok = False
 
-        while not (smoothie_ok[0] and smoothie_ok[1]):
-            data = yield from self._read()
-            if data == 'Smoothie':
-                smoothie_ok[0] = True
-            elif data == 'ok':
-                smoothie_ok[1] = True
+        first_message = yield from self._read()
+        second_message = yield from self._read()
 
-        return smoothie_ok[0] and smoothie_ok[1]
+        return (first_message == 'Smoothie') and (second_message == 'ok')
 
     @asyncio.coroutine
     def send(self, gcode, response_handler):
-        self.writer.write(gcode.encode()) 
+        delimiter = '\r\n'
+        gcode = gcode.strip() + delimiter
+        self.writer.write(gcode.encode('utf-8')) 
         yield from self.writer.drain()
 
         if response_handler:
@@ -107,37 +53,63 @@ class SmoothieCom(object):
         done = False
         res = []
 
-        while not done:
-            data = (yield from self._read())
-            if data == None:
-                done = True
-                break
 
-            if response_handler:
-                response_handler.send(data)
+        tries_left = 3
 
-            if not self.feedback:
-                done = True
-                break
+        while tries_left:
+            response = (yield from self._read())
+            if not response:
+                tries_left -= 1
+                yield from asyncio.sleep(0.2)
+                continue
+            else:
+                tries_left = 0
+
+            if gcode == 'M114':
+                status, data = response.split(' ')
+                data_json = json.loads(data)
+
+            if gcode == ' ':
+                pass
+            print('response is', response)
+
+            if ' ' in response:
+                pass
+            else:
+                status, data = 'ok', response
+
+
+            print(data_json)
+
+            #if data == None:
+            #    done = True
+            #    break
+
+            #if response_handler:
+            #    response_handler.send(data)
+
+            #if not self.feedback:
+            #    done = True
+            #    break
             
             # check whether JSON/dict format
-            if data.find('{') > 0:
+            #if data.find('{') > 0:
                 # pull out any text data at beginning
-                text = data[:data.find('{')]
-                res.append(text)
+            #    text = data[:data.find('{')]
+            #    res.append(text)
 
                 # convert to JSON object
-                jtxt = data[data.find('{'):]
-                res.append(jtxt)
-                jobj = json.loads(jtxt)
+            #    jtxt = data[data.find('{'):]
+            #    res.append(jtxt)
+            #    jobj = json.loads(jtxt)
 
                 # check whether has "stat" and value if so
-                if 'stat' in jobj:
-                    if jobj['stat'] == 0:
-                        done = True
+            #    if 'stat' in jobj:
+            #        if jobj['stat'] == 0:
+            #            done = True
 
-        if response_handler:
-            response_handler.send(None)
+        #if response_handler:
+        #    response_handler.send(None)
 
         return res
 
@@ -147,7 +119,24 @@ class SmoothieCom(object):
             data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
             return data.decode().strip()
         except concurrent.futures.TimeoutError:
+            print('Timeout Error')
             return None
 
     def is_ready(self):
         return self.status == "ok"
+
+
+@asyncio.coroutine
+def repl(smc):
+    while True:
+        req = input('>>> ').strip()
+        res = yield from smc.send(req, None)
+        print(res)
+
+if __name__ == '__main__':
+    smc = SmoothieCom('localhost',3335)
+    loop = asyncio.get_event_loop()
+    res = loop.run_until_complete(smc.connect())
+    if res:
+        loop.run_until_complete(repl(smc))
+    print(res)
