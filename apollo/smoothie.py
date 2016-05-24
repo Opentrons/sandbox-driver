@@ -23,8 +23,8 @@ class SmoothieCom(object):
             )
         except OSError as e:
             logger.error("Did not connect")
-            #raise e
-            return False
+            raise e
+            # return False
 
         self.reader = reader
         self.writer = writer
@@ -32,86 +32,92 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def smoothie_handshake(self):
-        has_smoothie = False
-        has_ok = False
-
         first_message = yield from self._read()
         second_message = yield from self._read()
-
         return (first_message == 'Smoothie') and (second_message == 'ok')
 
     @asyncio.coroutine
     def send(self, gcode, response_handler):
+
+
+        # Turn on feedback
+        yield from self.turn_on_feedback()
+
+        gcode = gcode.strip()
         delimiter = '\r\n'
-        gcode = gcode.strip() + delimiter
-        self.writer.write(gcode.encode('utf-8')) 
+
+        # Add delimiter to gcode for Smoothie board
+        delimited_gcode = gcode.strip() + delimiter
+
+        self.writer.write(delimited_gcode.encode('utf-8'))
         yield from self.writer.drain()
 
         if response_handler:
             response_handler.send('start', gcode)
 
-        done = False
-        res = []
+        is_gcode_done = False
 
+        data_as_json = None
 
-        tries_left = 3
-
-        while tries_left:
+        while True:
             response = (yield from self._read())
-            if not response:
-                tries_left -= 1
-                yield from asyncio.sleep(0.2)
-                continue
-            else:
-                tries_left = 0
-
-            if gcode == 'M114':
-                status, data = response.split(' ')
-                data_json = json.loads(data)
-
-            if gcode == ' ':
-                pass
             print('response is', response)
 
-            if ' ' in response:
-                pass
-            else:
-                status, data = 'ok', response
+            # Handle M114 GCode
+            if gcode == 'M114' and not is_gcode_done:
+                try:
+                    status, data = response.split(' ')
+                    data_as_json = json.loads(data)
+                    is_gcode_done = True
+                    print('formatted data', data_as_json)
+                except ValueError:
+                    pass
+
+            # Handle G0 GCode
+            if gcode.startswith('G0') and not is_gcode_done:
+                if response == '{"stat":0}':
+                    is_gcode_done = True
+
+            # Handle G1 GCode
+            if gcode.startswith('G92') and not is_gcode_done:
+                if response == 'ok':
+                    is_gcode_done = True
+
+            if response == '{"stat":0}':
+                break
 
 
-            print(data_json)
+        yield from self.turn_off_feedback()
 
-            #if data == None:
-            #    done = True
-            #    break
-
-            #if response_handler:
-            #    response_handler.send(data)
-
-            #if not self.feedback:
-            #    done = True
-            #    break
-            
-            # check whether JSON/dict format
-            #if data.find('{') > 0:
-                # pull out any text data at beginning
-            #    text = data[:data.find('{')]
-            #    res.append(text)
-
-                # convert to JSON object
-            #    jtxt = data[data.find('{'):]
-            #    res.append(jtxt)
-            #    jobj = json.loads(jtxt)
-
-                # check whether has "stat" and value if so
-            #    if 'stat' in jobj:
-            #        if jobj['stat'] == 0:
-            #            done = True
+        return data_as_json
 
         #if response_handler:
         #    response_handler.send(None)
 
-        return res
+
+
+    @asyncio.coroutine
+    def turn_on_feedback(self):
+        yield from self.send_feedback_gcode('M62\r\n', 'feedback engaged')
+
+    @asyncio.coroutine
+    def turn_off_feedback(self):
+        yield from self.send_feedback_gcode('M63\r\n', 'feedback disengaged')
+
+    @asyncio.coroutine
+    def send_feedback_gcode(self, delimited_gcode, expected_response_msg):
+
+        self.writer.write(delimited_gcode.encode('utf-8'))
+        yield from self.writer.drain()
+
+        while True:
+            response = (yield from self._read())
+            print(response)
+            if response == expected_response_msg:
+                yield from self._read() # Next message is an ok message
+                break
+            else:
+                yield from asyncio.sleep(0.001)
 
     @asyncio.coroutine
     def _read(self):
