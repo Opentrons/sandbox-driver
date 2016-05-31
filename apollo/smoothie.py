@@ -35,8 +35,6 @@ class SmoothieCom(object):
         """
         return gcode.strip() + '\r\n'
 
-
-
     @asyncio.coroutine
     def smoothie_handshake(self):
         first_message = yield from self._read()
@@ -82,14 +80,17 @@ class SmoothieCom(object):
                 if response == '{"stat":0}':
                     is_gcode_done = True
 
-            # Handle G1 GCode
+            # Handle G92 GCode
             if gcode.startswith('G92') and not is_gcode_done:
                 if response == 'ok':
                     is_gcode_done = True
 
+
+            # TODO: G28
+            # TODO: G90
+
             if response == '{"stat":0}':
                 break
-
 
         yield from self.turn_off_feedback()
 
