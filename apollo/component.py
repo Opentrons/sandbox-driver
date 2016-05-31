@@ -55,6 +55,12 @@ class ControllerComponent(wamp.ApplicationSession):
         print('gonna join now...')
         yield from self.subscribe(handle_message, 'com.opentrons.browser_to_robot')
 
+    # @asyncio.coroutine
+    # def onMessage(self, msg):
+    #     # TODO enqueue message
+    #     # TODO return message id
+    #     pass
+
 
 if __name__ == '__main__':
     URL_TEMPLATE = "ws://{host}:{port}/{path}"
