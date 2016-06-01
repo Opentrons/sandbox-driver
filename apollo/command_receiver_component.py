@@ -39,7 +39,6 @@ if __name__ == '__main__':
         path='ws'
     )
 
-
     command_queue = multiprocessing.Manager().Queue(50)
     component = get_command_receiver(command_queue)
 
