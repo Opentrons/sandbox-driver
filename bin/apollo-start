@@ -6,8 +6,8 @@ import os
 
 from autobahn.asyncio import wamp
 
-from apollo.command_processor_component import get_command_processor_component
-from apollo.command_receiver_component import get_command_receiver
+from apollo.command_processor_component import RobotCommandProcessorComponent
+from apollo.command_receiver_component import CommandReceiverComponent
 
 
 command_queue = multiprocessing.Manager().Queue(500)
@@ -25,9 +25,11 @@ def start_command_processor(command_queue, url, loop=None):
     loop = loop or asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    component = get_command_processor_component(command_queue)
-    runner = wamp.ApplicationRunner(url, realm='ot_realm')
-    runner.run(component)
+    runner = wamp.ApplicationRunner(
+        url, realm='ot_realm',
+        extra={'command_queue': command_queue}
+    )
+    runner.run(RobotCommandProcessorComponent)
 
 
 def start_command_receiver(command_queue, url):
@@ -35,9 +37,11 @@ def start_command_receiver(command_queue, url):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    component = get_command_receiver(command_queue)
-    runner = wamp.ApplicationRunner(url, realm='ot_realm')
-    runner.run(component)
+    runner = wamp.ApplicationRunner(
+        url, realm='ot_realm',
+        extra={'command_queue': command_queue}
+    )
+    runner.run(CommandReceiverComponent)
 
 
 processor_process = multiprocessing.Process(
