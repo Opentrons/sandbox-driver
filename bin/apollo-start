@@ -1,10 +1,3 @@
 #!/usr/bin/env python3
 
-from apollo import controller
-
-
-try:
-	c = controller.Controller(crossbar_port=8000)
-	c.connect()
-except EOFError:
-	pass
+# TODO: start command receiver and command processor
