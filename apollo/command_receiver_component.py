@@ -23,7 +23,7 @@ def get_command_receiver(command_queue):
 
         @asyncio.coroutine
         def onJoin(self, details):
-            print('gonna join now...')
+            logger.info('CommandRecieverComponent has joined')
             handle_message = partial(enqueue_message, command_queue)
             yield from self.subscribe(handle_message, 'com.opentrons.browser_to_robot')
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     )
 
 
-    command_queue = multiprocessing.Manager().Queue()
+    command_queue = multiprocessing.Manager().Queue(50)
     component = get_command_receiver(command_queue)
 
     runner = wamp.ApplicationRunner(url, realm='ot_realm')
