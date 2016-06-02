@@ -4,20 +4,21 @@ import asyncio
 import logging
 import multiprocessing
 
-from apollo import utils
-
 from autobahn.asyncio import wamp
+
+from config.settings import Config
+from apollo import utils
 
 
 logger = logging.getLogger()
 
 
-class RobotCommandProcessorComponent(wamp.ApplicationSession):
+class CommandProcessorComponent(wamp.ApplicationSession):
     """WAMP application session for Controller"""
 
     @asyncio.coroutine
     def onJoin(self, details):
-        logger.info('RobotCommandProcessor joined')
+        logger.info('CommandProcessor joined')
 
         command_queue = self.config.extra.get('command_queue')
 
@@ -30,7 +31,7 @@ class RobotCommandProcessorComponent(wamp.ApplicationSession):
             # TODO: execute roboto message and publish result
 
             logger.debug('Dequeued Message ID: {} with {}'.format(id, msg))
-            self.publish('com.opentrons.robot_to_browser', msg)
+            self.publish(Config.ROBOT_TO_BROWSER_TOPIC, msg)
 
 
 if __name__ == '__main__':
@@ -50,4 +51,4 @@ if __name__ == '__main__':
         url, realm='ot_realm',
         extra={'command_queue': command_queue}
     )
-    runner.run(RobotCommandProcessorComponent)
+    runner.run(CommandProcessorComponent)

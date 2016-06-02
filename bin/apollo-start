@@ -6,7 +6,7 @@ import multiprocessing
 from autobahn.asyncio import wamp
 
 from config.settings import Config
-from apollo.command_processor_component import RobotCommandProcessorComponent
+from apollo.command_processor_component import CommandProcessorComponent
 from apollo.command_receiver_component import CommandReceiverComponent
 
 
@@ -20,7 +20,7 @@ def start_command_processor(command_queue, url, realm, loop=None):
         realm=realm,
         extra={'command_queue': command_queue}
     )
-    runner.run(RobotCommandProcessorComponent)
+    runner.run(CommandProcessorComponent)
 
 
 def start_command_receiver(command_queue, url, realm, loop=None):
