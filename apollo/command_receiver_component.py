@@ -6,6 +6,8 @@ import uuid
 
 from autobahn.asyncio import wamp
 
+from config.settings import Config
+
 logger = logging.getLogger('command-reciever-component')
 
 
@@ -26,13 +28,11 @@ class CommandReceiverComponent(wamp.ApplicationSession):
 
         command_queue = self.config.extra.get('command_queue')
 
-
-
         if not command_queue:
             raise Exception('A command_queue must be set in self.config.extra')
 
         handle_message = partial(enqueue_message, command_queue)
-        yield from self.subscribe(handle_message, 'com.opentrons.browser_to_robot')
+        yield from self.subscribe(handle_message, Config.BROWSER_TO_ROBOT_TOPIC)
 
 
 if __name__ == '__main__':

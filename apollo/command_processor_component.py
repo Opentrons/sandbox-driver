@@ -18,7 +18,7 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
     @asyncio.coroutine
     def onJoin(self, details):
-        logger.info('CommandProcessor joined')
+        logger.info('CommandProcessorComponent joined')
 
         command_queue = self.config.extra.get('command_queue')
 
