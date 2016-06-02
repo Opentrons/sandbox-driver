@@ -26,6 +26,9 @@ class RobotCommandProcessorComponent(wamp.ApplicationSession):
 
         while True:
             id, msg = yield from utils.coro_queue_get(command_queue)
+
+            # TODO: execute roboto message and publish result
+
             logger.debug('Dequeued Message ID: {} with {}'.format(id, msg))
             self.publish('com.opentrons.robot_to_browser', msg)
 

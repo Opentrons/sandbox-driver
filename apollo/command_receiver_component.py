@@ -26,6 +26,8 @@ class CommandReceiverComponent(wamp.ApplicationSession):
 
         command_queue = self.config.extra.get('command_queue')
 
+
+
         if not command_queue:
             raise Exception('A command_queue must be set in self.config.extra')
 
@@ -44,5 +46,8 @@ if __name__ == '__main__':
 
     command_queue = multiprocessing.Manager().Queue(50)
 
-    runner = wamp.ApplicationRunner(url, realm='ot_realm')
+    runner = wamp.ApplicationRunner(
+        url, realm='ot_realm',
+        extra={'command_queue': command_queue}
+    )
     runner.run(CommandReceiverComponent)
