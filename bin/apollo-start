@@ -2,53 +2,49 @@
 
 import asyncio
 import multiprocessing
-import os
 
 from autobahn.asyncio import wamp
 
+from config.settings import Config
 from apollo.command_processor_component import RobotCommandProcessorComponent
 from apollo.command_receiver_component import CommandReceiverComponent
 
 
-command_queue = multiprocessing.Manager().Queue(500)
-
-URL_TEMPLATE = "ws://{host}:{port}/{path}"
-
-url = URL_TEMPLATE.format(
-    host='localhost',
-    port='8000',
-    path='ws'
-)
-
-def start_command_processor(command_queue, url, loop=None):
+def start_command_processor(command_queue, url, realm, loop=None):
     # New event loops are required for event loops to run in a subprocess
     loop = loop or asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     runner = wamp.ApplicationRunner(
-        url, realm='ot_realm',
+        url,
+        realm=realm,
         extra={'command_queue': command_queue}
     )
     runner.run(RobotCommandProcessorComponent)
 
 
-def start_command_receiver(command_queue, url):
+def start_command_receiver(command_queue, url, realm, loop=None):
     # New event loops are required for event loops to run in a subprocess
-    loop = asyncio.new_event_loop()
+    loop = loop or asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     runner = wamp.ApplicationRunner(
-        url, realm='ot_realm',
+        url,
+        realm=realm,
         extra={'command_queue': command_queue}
     )
     runner.run(CommandReceiverComponent)
 
 
+command_queue = multiprocessing.Manager().Queue(Config.COMMAND_QUEUE_SIZE)
+
 processor_process = multiprocessing.Process(
-    target=start_command_processor, args=(command_queue, url)
+    target=start_command_processor,
+    args=(command_queue, Config.ROUTER_URL, Config.ROUTER_REALM)
 )
 receiver_process = multiprocessing.Process(
-    target=start_command_receiver, args=(command_queue, url)
+    target=start_command_receiver,
+    args=(command_queue, Config.ROUTER_URL, Config.ROUTER_REALM)
 )
 
 
