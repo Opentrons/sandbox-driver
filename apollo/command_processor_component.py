@@ -21,9 +21,13 @@ class CommandProcessorComponent(wamp.ApplicationSession):
         logger.info('CommandProcessorComponent joined')
 
         command_queue = self.config.extra.get('command_queue')
+        control_queue = self.config.extra.get('control_queue')
 
         if not command_queue:
             raise Exception('A command_queue must be set in self.config.extra')
+
+        if not control_queue:
+            raise Exception('A control_queue must be set in self.config.extra')
 
         while True:
             id, msg = yield from utils.coro_queue_get(command_queue)
