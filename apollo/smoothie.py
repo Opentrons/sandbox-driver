@@ -8,11 +8,10 @@ logger = logging.getLogger()
 
 
 class SmoothieCom(object):
-    def __init__(self, host, port, loop=None, is_feedback_enabled=False):
+    def __init__(self, host, port, loop=None):
         self.host = host
         self.port = port
         self.loop = loop or asyncio.get_event_loop()
-        self.is_feedback_enabled = is_feedback_enabled
 
     def connect(self):
         try:
@@ -42,29 +41,42 @@ class SmoothieCom(object):
         return (first_message == 'Smoothie') and (second_message == 'ok')
 
     @asyncio.coroutine
+    def write_and_drain(self, message):
+        self.writer.write(message.encode('utf-8'))
+        yield from self.writer.drain()
+
+    @asyncio.coroutine
     def send(self, gcode, response_handler):
-        yield from self.turn_on_feedback()
+        # Skip if command is EMERGENCY STOP or RESET FROM HALT
+        if not (gcode == 'M112' or gcode == 'M999'):
+            yield from self.turn_on_feedback()
 
         delimited_gcode = self.get_delimited_gcode(gcode)
 
         # TODO: refactor into write and drain method coro
-        self.writer.write(delimited_gcode.encode('utf-8'))
-        yield from self.writer.drain()
+        #self.writer.write(delimited_gcode.encode('utf-8'))
+        #yield from self.writer.drain()
+        yield from self.write_and_drain(delimited_gcode)
 
         # TODO: Make this async?
+        # if inspect.iscroutine(response_handler): ???
         if response_handler:
-            response_handler.send('start', gcode)
-
+            yield from response_handler('start', gcode)
+        #    response_handler.send('start', gcode)
 
         is_gcode_done = False
         data_as_json = None
 
-        while True:
+        #while True:
+        while is_gcode_done == False:
             response = (yield from self._read())
 
             # TODO: do proper logging and remove print statements
-            print('response is', response)
-
+#            print('response is', response)
+            #status, data = response.split(' ')
+            #data_as_json = json.loads(data)
+            #logger.info('response is', response)
+            print('response is',response)
             # Handle M114 GCode
             if gcode == 'M114' and not is_gcode_done:
                 try:
@@ -72,6 +84,7 @@ class SmoothieCom(object):
                     data_as_json = json.loads(data)
                     is_gcode_done = True
                     print('formatted data', data_as_json)
+                    #logger.info('formatted data', data_as_json)
                 except ValueError:
                     pass
 
@@ -85,9 +98,27 @@ class SmoothieCom(object):
                 if response == 'ok':
                     is_gcode_done = True
 
-
             # TODO: G28
+            if gcode.startswith('G28') and not is_gcode_done:
+                if response == '{"stat":0}':
+                    is_gcode_done  = True
+
             # TODO: G90
+            if gcode.startswith('G90') and not is_gcode_done:
+                if response == 'ok':
+                    is_gcode_done = True
+
+            # TODO: M112
+            if gcode.startswith('M112') and not is_gcode_done:
+                if response.startswith('ok') or response == '{"!!":"!!"}':
+                    gcode = 'M999'
+                    delimited_gcode = self.get_delimited_gcode(gcode)
+                    yield from self.write_and_drain(delimited_gcode)
+
+            # TODO: M999
+            if gcode.startswith('M999') and not is_gcode_done:
+                if response == 'ok':
+                    is_gcode_done = True
 
             if response == '{"stat":0}':
                 break
@@ -112,7 +143,7 @@ class SmoothieCom(object):
 
         while True:
             response = (yield from self._read())
-            print(response)
+            print('send_feedback_code', response)
             if response == expected_response_msg:
                 yield from self._read() # Next message is an ok message
                 break
@@ -134,7 +165,7 @@ def repl(smc):
     while True:
         req = input('>>> ').strip()
         res = yield from smc.send(req, None)
-        print(res)
+        print('res:', res)
 
 if __name__ == '__main__':
     smc = SmoothieCom('localhost', 3335)
@@ -142,4 +173,4 @@ if __name__ == '__main__':
     res = loop.run_until_complete(smc.connect())
     if res:
         loop.run_until_complete(repl(smc))
-    print(res)
+    print('final result:', res)

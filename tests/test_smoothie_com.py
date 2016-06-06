@@ -16,7 +16,6 @@ class SmoothieComTest(unittest.TestCase):
             self.address[0],
             self.address[1],
             self.loop,
-            is_feedback_enabled=False
         )
         self.run_in_loop(self.smc.connect())
 
