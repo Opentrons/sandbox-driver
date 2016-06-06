@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+
+import asyncio
+import multiprocessing
+
+from autobahn.asyncio import wamp
+
+from config.settings import Config
+from apollo.command_processor_component import CommandProcessorComponent
+from apollo.command_receiver_component import CommandReceiverComponent
+
+
+def start_command_processor(command_queue, url, realm, loop=None):
+    # New event loops are required for event loops to run in a subprocess
+    loop = loop or asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    runner = wamp.ApplicationRunner(
+        url,
+        realm=realm,
+        extra={'command_queue': command_queue}
+    )
+    runner.run(CommandProcessorComponent)
+
+
+def start_command_receiver(command_queue, url, realm, loop=None):
+    # New event loops are required for event loops to run in a subprocess
+    loop = loop or asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    runner = wamp.ApplicationRunner(
+        url,
+        realm=realm,
+        extra={'command_queue': command_queue}
+    )
+    runner.run(CommandReceiverComponent)
+
+
+command_queue = multiprocessing.Manager().Queue(Config.COMMAND_QUEUE_SIZE)
+
+processor_process = multiprocessing.Process(
+    target=start_command_processor,
+    args=(command_queue, Config.ROUTER_URL, Config.ROUTER_REALM)
+)
+receiver_process = multiprocessing.Process(
+    target=start_command_receiver,
+    args=(command_queue, Config.ROUTER_URL, Config.ROUTER_REALM)
+)
+
+
+processor_process.start()
+receiver_process.start()
+
+processor_process.join()
+receiver_process.join()

@@ -1,7 +1,5 @@
-try:
-	from setuptools import setup
-except ImportError:
-	from distutils.core import setup
+from setuptools import find_packages, setup
+
 
 config = {
 	'description': "Python hardware drivers",
@@ -13,8 +11,10 @@ config = {
 		'coverage',
 		'autobahn'
 	],
-	'packages': ['driver'],
-	'scripts': ['./bin/driver-test'],
+	'packages': find_packages(),
+	'scripts': [
+		'bin/apollo-start'
+	],
 	'name': 'driver'
 }
 
