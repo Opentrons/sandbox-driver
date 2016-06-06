@@ -43,12 +43,11 @@ logger = logging.getLogger()
 
 
 
-class SmoothieBoard(object):
-    def __init__(self, host, port, loop, feedback=False):
+class SmoothieCom(object):
+    def __init__(self, host, port, loop=None):
         self.host = host
         self.port = port
         self.loop = loop
-        self.feedback = feedback
 
     def connect(self):
         try:
