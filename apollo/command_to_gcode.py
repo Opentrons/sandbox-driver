@@ -2,7 +2,7 @@ import asyncio
 
 from apollo.smoothie import SmoothieCom
 
-class CommandProcessor(object):
+class CommandProcessor(object): 
 
     '''
     class for handling received front-end commands
@@ -64,8 +64,8 @@ class GCodeCompiler(object):
         temp_string = ''
 
         for ax in self.axis:
-            # accept both lower and upper case axis
-            val = data.get(ax.lower()) if data.get(ax.lower())!=None else data.get(ax.upper())
+            
+            val = data.get(ax.lower())
             
             if val!=None:
                 temp_string += ' '                    # ascii space
