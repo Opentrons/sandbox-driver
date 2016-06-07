@@ -27,7 +27,8 @@ class CommandProcessor(object):
         '''
         send a GCode string to the smoothie module
         '''
-        yield from self.smoothie_com.send(string)
+        if len(string):
+            yield from self.smoothie_com.send(string)
 
     @asyncio.coroutine
     def process(self, command):
@@ -53,49 +54,79 @@ class GCodeCompiler(object):
 
     def __init__(self):
 
-        self.axis = ['X', 'Y', 'Z', 'A', 'B']
-
-        self.speed_axis = {
-            'xyz'   : 'F',
-            'a'     : 'a',
-            'b'     : 'b'
+        self.axis = {
+            'seek'  : ['x','y','z','a','b'],
+            'speed' : ['xyz'      ,'a','b'],
+            'accel' : ['xy'   ,'z','a','b']
         }
 
-        self.accel_axis = {
-            'xy'    : 'S',
-            'z'     : 'Z',
-            'a'     : 'A',
-            'b'     : 'B'
-        }
-
-        self.codes = {
+        self.commands = {
             'seek'      : 'G0',
-            'abs'       : 'G90',
-            'rel'       : 'G91',
+            'speed'     : 'G0',
+            'move_to'   : 'G90',
+            'move'      : 'G91',
             'home'      : 'G28',
             'accel'     : 'M204',
             'hardstop'  : 'M112',
             'reset'     : 'M999'
         }
 
-    def parse_coords(self,data):
+        self.codes = {
+            'seek' : {
+                'x'     : 'X',
+                'y'     : 'Y',
+                'z'     : 'Z',
+                'a'     : 'A',
+                'b'     : 'B'
+            },
+            # XYZ axis speeds are tied together, others are independent
+            'speed' : {
+                'xyz'   : 'F',
+                'a'     : 'a',
+                'b'     : 'b'
+            },
+            # XY axis accelerations are tied together, others are independent
+            'accel' : {
+                'xy'    : 'S',
+                'z'     : 'Z',
+                'a'     : 'A',
+                'b'     : 'B'
+            }
+        }
+
+    def parse_values(self,data,type):
 
         '''
-        method used by 'move' and 'move_to' to create GCode coordinates for each supplied axis
+        method to create GCode values for each supplied axis
         '''
 
         temp_string = ''
 
-        for ax in self.axis:
+        for ax in self.axis[type]:
             
-            val = data.get(ax.lower())
+            val = data.get(ax,None)
             
             if val!=None:
                 temp_string += ' '                    # ascii space
-                temp_string += ax                     # axis
+                temp_string += self.codes[type][ax]   # axis
                 temp_string += str(val)               # value
 
         return temp_string
+
+    def create_command(self,data,type):
+
+        '''
+        apply a given axis' commands/codes to the supplied front-end data
+        '''
+
+        tstring = self.commands[type]
+
+        tstring += self.parse_values(data,type)
+
+        if tstring!=self.commands[type]:
+            return tstring
+        else:
+            return ''
 
     def move(self,data):
 
@@ -103,13 +134,7 @@ class GCodeCompiler(object):
         create relative movement gcode
         '''
 
-        coords_string = self.parse_coords(data)
-
-        if len(coords_string):
-            return [self.codes['rel'],self.codes['seek']+coords_string]
-
-        else:
-            return []
+        return [ self.commands['move'] , self.create_command(data,'seek') ]
 
 
     def move_to(self,data):
@@ -118,13 +143,23 @@ class GCodeCompiler(object):
         create absolute movement gcode
         '''
 
-        coords_string = self.parse_coords(data)
+        return [ self.commands['move_to'] , self.create_command(data,'seek') ]
 
-        if len(coords_string):
-            return [self.codes['abs'],self.codes['seek']+coords_string]
+    def speed(self,data):
 
-        else:
-            return []
+        '''
+        create 'speed' gcode
+        '''
+
+        return [self.create_command(data,'speed')]
+
+
+    def acceleration(self,data):
+        '''
+        create 'acceleration' gcode
+        '''
+
+        return [self.create_command(data,'accel')]
 
     def home(self,data):
 
@@ -132,75 +167,20 @@ class GCodeCompiler(object):
         create 'home' gcode: if no axis are specified, all axis are homed at once
         '''
 
-        command = self.codes['home']
+        tstring = self.commands['home']
             
         if data: # a None might be passed
             for n in data:
-                command += ' '
-                command += n.upper()
+                tstring += ' '
+                tstring += str(n).upper() # UPPER CASE
 
-        return [command]
-
-    def speed(self,data):
-
-        '''
-        create 'speed' gcode: XYZ axis speeds are tied together, others are independent
-        '''
-
-        command = self.codes['seek']
-
-        if data.get('xyz') != None:
-            command += ' '
-            command += self.speed_axis['xyz']
-            command += str(data['xyz'])
-        if data.get('a') != None:
-            command += ' '
-            command += self.speed_axis['a']
-            command += str(data['a'])
-        if data.get('b') != None:
-            command += ' '
-            command += self.speed_axis['b']
-            command += str(data['b'])
-
-        if command!=self.codes['seek']:
-            return [command]
-        else:
-            return []
-
-    def acceleration(self,data):
-        '''
-        create 'acceleration' gcode: XY axis accelerations are tied together, others are independent
-        '''
-
-        command = self.codes['accel']
-
-        if data.get('xy') != None:
-            command += ' '
-            command += self.accel_axis['xy']
-            command += str(data['xy'])
-        if data.get('z') != None:
-            command += ' '
-            command += self.accel_axis['z']
-            command += str(data['z'])
-        if data.get('a') != None:
-            command += ' '
-            command += self.accel_axis['a']
-            command += str(data['a'])
-        if data.get('b') != None:
-            command += ' '
-            command += self.accel_axis['b']
-            command += str(data['b'])
-
-        if command!=self.codes['accel']:
-            return [command]
-        else:
-            return []
+        return [tstring]
 
     def hardstop(self,data):
         '''
         create 'hardstop' gcode: halt the motor driver, then reset it
         '''
-        return [self.codes['hardstop'],self.codes['reset']]
+        return [self.commands['hardstop'],self.commands['reset']]
 
 
 
