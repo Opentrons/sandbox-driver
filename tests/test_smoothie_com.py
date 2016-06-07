@@ -13,6 +13,11 @@ def get_mock_coro(return_value):
     return mock.Mock(wraps=mock_coro)
 
 
+class Reader(object):
+    @asyncio.coroutine
+    def readline(self):
+        yield from 1
+
 class Writer(object):
     def __init__(self):
         self.write_buffer = []
@@ -32,37 +37,23 @@ class Writer(object):
 
 class SmoothieComTest(unittest.TestCase):
     def setUp(self):
-        asyncio.set_event_loop(None)
-        self.loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(None)
+        # self.loop = asyncio.new_event_loop()
+        self.loop = asyncio.get_event_loop()
 
         self.address = apollo.utils.get_free_os_address()
         self.smc = SmoothieCom(
             self.address[0],
             self.address[1],
-            self.loop,
+            # self.loop,
         )
-        # self.run_in_loop(self.smc.connect())
 
     def run_in_loop(self, coro):
         return self.loop.run_until_complete(coro)
 
     def test_send_M114_gcode(self):
-        write_mock = mock.Mock()
-        writer_mock = mock.Mock()
-        drain_mock = mock.Mock()
-
-        reader_mock = mock.Mock()
-        read_mock = mock.Mock()
-        read_line_mock = mock.Mock()
-
-        self.smc.writer = get_mock_coro(writer_mock)
-        self.smc.writer.drain = get_mock_coro(drain_mock)
-        self.smc.writer.write = get_mock_coro(write_mock)
-
-        self.smc.reader = get_mock_coro(reader_mock)
-        self.smc.reader.read = get_mock_coro(read_mock)
-        self.smc.reader.readline = get_mock_coro(read_line_mock)
-
+        self.smc.writer = Writer()
+        self.smc.reader = Reader()
 
         self.loop.run_until_complete(self.smc.send('M114', None))
 
