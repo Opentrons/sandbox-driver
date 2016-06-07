@@ -2,7 +2,7 @@ import asyncio
 
 from apollo.smoothie import SmoothieCom
 
-class CommandProcessor(object): 
+class CommandToGCode(object): 
 
     '''
     class for handling received front-end commands
@@ -11,59 +11,19 @@ class CommandProcessor(object):
     '''
 
     def __init__(self):
+
         self.smoothie_com = SmoothieCom('localhost', 8000)
 
-        self.compiler = GCodeCompiler()
-
-    @asyncio.coroutine
-    def connect(self):
-        '''
-        tell the smoothie module to connect to the motor controller
-        '''
-        yield from self.smoothie_com.connect()
-
-    @asyncio.coroutine
-    def send_gcode(self,string):
-        '''
-        send a GCode string to the smoothie module
-        '''
-        if len(string):
-            yield from self.smoothie_com.send(string)
-
-    @asyncio.coroutine
-    def process(self, command):
-        '''
-        receive front-end commands, and convert them to GCode
-        '''
-        com_type = command.get('type', '')
-        com_data = command.get('data', {})
-
-        gcode_creator = getattr(self.compiler, com_type, None)
-
-        if gcode_creator:
-            for c in gcode_creator(com_data):
-                yield from self.send_gcode(c)
-
-
-
-class GCodeCompiler(object):
-
-    '''
-    class for converting a front-end command to it's GCode equivalent
-    '''
-
-    def __init__(self):
-
         # axis are given a predefined order, making testing easier
-        self.command_axis = {
-            'seek'  : ['x','y','z','a','b'],
-            'speed' : ['xyz'      ,'a','b'],
-            'acceleration' : ['xy'   ,'z','a','b']
+        self._command_axis = {
+            'seek'  :           ['x','y','z','a','b'],
+            'speed' :           ['xyz','a','b'],
+            'acceleration' :    ['xy','z','a','b']
         }
 
         # dict of gcode commands
         # only one command (plus its arguments/values) is sent to smoothie-com at a time
-        self.gcode_commands = {
+        self._gcode_commands = {
             'seek'          : 'G0',
             'speed'         : 'G0',
             'move_abs'      : 'G90',
@@ -75,7 +35,7 @@ class GCodeCompiler(object):
         }
 
         # labels for any value passed with a command
-        self.gcode_keys = {
+        self._gcode_keys = {
             'seek' : {
                 'x'     : 'X',
                 'y'     : 'Y',
@@ -98,36 +58,50 @@ class GCodeCompiler(object):
             }
         }
 
-    def parse_values(self,data,type):
+    @asyncio.coroutine
+    def connect(self):
+        '''
+        tell the smoothie module to connect to the motor controller
+        '''
+        yield from self.smoothie_com.connect()
+
+    @asyncio.coroutine
+    def send_gcode(self,string):
+        '''
+        send a GCode string to the smoothie module
+        '''
+        if len(string):
+            yield from self.smoothie_com.send(string)
+
+    @asyncio.coroutine
+    def process(self, command):
+        '''
+        receive front-end commands, and convert them to GCode
+        '''
+        
+        method = getattr(self, command.get('type', '') , None)
+
+        if method:
+            for line in method( command.get('data',{}) ):
+                yield from self.send_gcode(line)
+
+    def create_command_string(self,data,type):
 
         '''
-        method to create GCode values for each supplied axis
+        turn a front-end command dict into the equivalent gcode string
         returns a string
         '''
 
         temp_string = ''
 
-        for axis in self.command_axis.get(type,[]):
-                        
+        for axis in self._command_axis.get(type,[]):
             if data.get(axis,None):
-                temp_string += ' '                          # ascii space
-                temp_string += self.gcode_keys[type][axis]  # axis
-                temp_string += str(data[axis])              # value
-
-        return temp_string
-
-    def create_command_string(self,data,type):
-
-        '''
-        apply a given axis' commands/codes to the supplied front-end data
-        returns a string
-        '''
-
-        temp_string = self.parse_values(data,type)
+                temp_key = self._gcode_keys[type][axis]
+                temp_string += ' {0}{1}'.format( temp_key , data[axis] )
 
         # only return the string if it has grown beyond the initial command
-        if temp_string:
-            return self.gcode_commands[type] + temp_string
+        if len(temp_string):
+            return self._gcode_commands[type] + temp_string # prepend with the appropriate gcode command
         else:
             return ''
 
@@ -138,9 +112,9 @@ class GCodeCompiler(object):
         returns array of strings
         '''
 
-        mode_command = self.gcode_commands['move_rel'] if data.get('relative',False) else self.gcode_commands['move_abs']
+        mode = self._gcode_commands['move_rel'] if data.get('relative',False) else self._gcode_commands['move_abs']
 
-        return [ mode_command , self.create_command_string(data,'seek') ]
+        return [ mode , self.create_command_string(data,'seek') ]
 
 
     def speed(self,data):
@@ -168,12 +142,10 @@ class GCodeCompiler(object):
         returns array of strings
         '''
 
-        temp_string = self.gcode_commands['home']
+        temp_string = self._gcode_commands['home']
             
-        if data: # a None might be passed
-            for n in data:
-                temp_string += ' '
-                temp_string += str(n[0]).upper() # UPPER CASE
+        for n in (data if data else []): # a None might be passed
+            temp_string += ' {}'.format(str(n[0]).upper()) # UPPER CASE
 
         return [ temp_string ]
 
@@ -182,11 +154,6 @@ class GCodeCompiler(object):
         create 'hardstop' gcode: halt the motor driver, then reset it
         returns array of strings
         '''
-        return [ self.gcode_commands['hardstop'] , self.gcode_commands['reset'] ]
-
-
-
-
-
+        return [ self._gcode_commands['hardstop'] , self._gcode_commands['reset'] ]
 
 

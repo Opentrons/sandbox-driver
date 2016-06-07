@@ -2,7 +2,7 @@ import unittest
 from unittest import mock
 import asyncio
 
-from apollo.command_to_gcode import CommandProcessor
+from apollo.command_to_gcode import CommandToGCode
 
 class CommandToGCodeTestCase(unittest.TestCase):
 
@@ -18,9 +18,9 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.loop = asyncio.new_event_loop()
 
-        self.processor = CommandProcessor()
+        self.com2gcode = CommandToGCode()
 
-        self.processor.smoothie_com.send = mMock
+        self.com2gcode.smoothie_com.send = mMock
 
 
     def test_move_rel_command(self):
@@ -28,7 +28,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'move' command for relative coordinates
         '''
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'move',
             'data': {
                 'relative' : True,
@@ -56,7 +56,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'move' command for absolute coordinates
         '''
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'move',
             'data': {
                 'x': 100,
@@ -83,7 +83,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'speed' command
         '''
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'speed',
             'data': {
                 'xyz': 3000,
@@ -109,7 +109,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'acceleration' command
         '''
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'acceleration',
             'data': {
                 'xy': 3000,
@@ -129,7 +129,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
         self.mock.reset_mock()
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'acceleration',
             'data': {}
         }))
@@ -150,7 +150,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         expected = []
 
         # test ALL axis
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'home',
             'data': ['x','y','z','a','b']
         }))
@@ -163,7 +163,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.mock.reset_mock()
 
         # test a few of the axis
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'home',
             'data': ['x','b']
         }))
@@ -176,7 +176,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.mock.reset_mock()
 
         # test if data is None
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'home',
             'data': None
         }))
@@ -194,7 +194,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'hardstop' command
         '''
 
-        self.loop.run_until_complete(self.processor.process({
+        self.loop.run_until_complete(self.com2gcode.process({
             'type':'hardstop'
         }))
 
