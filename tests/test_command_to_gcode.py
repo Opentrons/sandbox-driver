@@ -4,16 +4,23 @@ import asyncio
 
 from apollo.command_to_gcode import CommandProcessor
 
-class CommandProcessorTestCase(unittest.TestCase):
+class CommandToGCodeTestCase(unittest.TestCase):
 
 
     def setUp(self):
+
+        self.mock = mock.Mock()
+
+        @asyncio.coroutine
+        def mMock(m):
+            self.mock(m)
+
 
         self.loop = asyncio.new_event_loop()
 
         self.processor = CommandProcessor()
 
-        self.processor.smoothie_com.send = mock.Mock()
+        self.processor.smoothie_com.send = mMock
 
 
     def test_move_command(self):
@@ -32,7 +39,7 @@ class CommandProcessorTestCase(unittest.TestCase):
             }
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
         expected = [
             mock.call('G91'),
@@ -40,6 +47,7 @@ class CommandProcessorTestCase(unittest.TestCase):
         ]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
     def test_move_to_command(self):
@@ -58,7 +66,7 @@ class CommandProcessorTestCase(unittest.TestCase):
             }
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
         expected = [
             mock.call('G90'),
@@ -66,6 +74,7 @@ class CommandProcessorTestCase(unittest.TestCase):
         ]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
     def test_speed_command(self):
@@ -84,7 +93,7 @@ class CommandProcessorTestCase(unittest.TestCase):
             }
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
         expected = [
             mock.call('F3000'),
@@ -93,6 +102,7 @@ class CommandProcessorTestCase(unittest.TestCase):
         ]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
     def test_acceleration_command(self):
@@ -111,13 +121,26 @@ class CommandProcessorTestCase(unittest.TestCase):
             }
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
         expected = [
             mock.call('M204 S3000 Z200 A400 B500')
         ]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
+
+        self.loop.run_until_complete(self.processor.process({
+            'type':'acceleration',
+            'data': {}
+        }))
+
+        result = self.mock.call_args_list
+
+        expected = []
+
+        self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
     def test_home_command(self):
@@ -133,11 +156,12 @@ class CommandProcessorTestCase(unittest.TestCase):
             'data': ['x','y','z','a','b']
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
-        expected.append(mock.call('G28 X Y Z A B'))
+        expected = [mock.call('G28 X Y Z A B')]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
         # test a few of the axis
         self.loop.run_until_complete(self.processor.process({
@@ -145,11 +169,12 @@ class CommandProcessorTestCase(unittest.TestCase):
             'data': ['x','b']
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
-        expected.append(mock.call('G28 X B'))
+        expected = [mock.call('G28 X B')]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
         # test if data is None
         self.loop.run_until_complete(self.processor.process({
@@ -157,11 +182,12 @@ class CommandProcessorTestCase(unittest.TestCase):
             'data': None
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
-        expected.append(mock.call('G28'))
+        expected = [mock.call('G28')]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
     def test_hardstop_command(self):
@@ -173,7 +199,7 @@ class CommandProcessorTestCase(unittest.TestCase):
             'type':'hardstop'
         }))
 
-        result = self.processor.smoothie_com.send.call_args_list
+        result = self.mock.call_args_list
 
         expected = [
             mock.call('M112'),
@@ -181,6 +207,7 @@ class CommandProcessorTestCase(unittest.TestCase):
         ]
 
         self.assertEquals(expected, result)
+        self.mock.reset_mock()
 
 
 
