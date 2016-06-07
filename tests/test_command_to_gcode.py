@@ -43,7 +43,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         expected = [
             mock.call('G91'),
-            mock.call('G0 X100.123 Y200.234 Z-300.987 a10.011 b20.12'),
+            mock.call('G0 X100.123 Y200.234 Z-300.987 A10.011 B20.12'),
         ]
 
         self.assertEquals(expected, result)
@@ -70,7 +70,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         expected = [
             mock.call('G90'),
-            mock.call('G0 X100 Y200 Z300 a10 b20'),
+            mock.call('G0 X100 Y200 Z300 A10 B20'),
         ]
 
         self.assertEquals(expected, result)

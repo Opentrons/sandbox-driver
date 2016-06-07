@@ -53,7 +53,7 @@ class GCodeCompiler(object):
 
     def __init__(self):
 
-        self.axis = ['X', 'Y', 'Z', 'a', 'b']
+        self.axis = ['X', 'Y', 'Z', 'A', 'B']
 
     def parse_coords(self,data):
 
