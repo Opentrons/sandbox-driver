@@ -124,16 +124,19 @@ class GCodeCompiler(object):
         create 'speed' gcode: XYZ axis speeds are tied together, others are independent
         '''
 
-        commands = []
+        command = 'G0'
 
         if data.get('xyz') != None:
-            commands.append('F{0}'.format(data['xyz']))
+            command += ' F{0}'.format(data['xyz'])
         if data.get('a') != None:
-            commands.append('a{0}'.format(data['a']))
+            command += ' a{0}'.format(data['a'])
         if data.get('b') != None:
-            commands.append('b{0}'.format(data['b']))
+            command += ' b{0}'.format(data['b'])
 
-        return commands
+        if command!='G0':
+            return [command]
+        else:
+            return []
 
     def acceleration(self,data):
         '''

@@ -96,9 +96,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         result = self.mock.call_args_list
 
         expected = [
-            mock.call('F3000'),
-            mock.call('a400'),
-            mock.call('b500'),
+            mock.call('G0 F3000 a400 b500'),
         ]
 
         self.assertEquals(expected, result)
