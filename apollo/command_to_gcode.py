@@ -55,6 +55,29 @@ class GCodeCompiler(object):
 
         self.axis = ['X', 'Y', 'Z', 'A', 'B']
 
+        self.speed_axis = {
+            'xyz'   : 'F',
+            'a'     : 'a',
+            'b'     : 'b'
+        }
+
+        self.accel_axis = {
+            'xy'    : 'S',
+            'z'     : 'Z',
+            'a'     : 'A',
+            'b'     : 'B'
+        }
+
+        self.codes = {
+            'seek'      : 'G0',
+            'abs'       : 'G90',
+            'rel'       : 'G91',
+            'home'      : 'G28',
+            'accel'     : 'M204',
+            'hardstop'  : 'M112',
+            'reset'     : 'M999'
+        }
+
     def parse_coords(self,data):
 
         '''
@@ -83,7 +106,7 @@ class GCodeCompiler(object):
         coords_string = self.parse_coords(data)
 
         if len(coords_string):
-            return ['G91','G0'+coords_string]
+            return [self.codes['rel'],self.codes['seek']+coords_string]
 
         else:
             return []
@@ -98,7 +121,7 @@ class GCodeCompiler(object):
         coords_string = self.parse_coords(data)
 
         if len(coords_string):
-            return ['G90','G0'+coords_string]
+            return [self.codes['abs'],self.codes['seek']+coords_string]
 
         else:
             return []
@@ -109,7 +132,7 @@ class GCodeCompiler(object):
         create 'home' gcode: if no axis are specified, all axis are homed at once
         '''
 
-        command = 'G28'
+        command = self.codes['home']
             
         if data: # a None might be passed
             for n in data:
@@ -124,16 +147,22 @@ class GCodeCompiler(object):
         create 'speed' gcode: XYZ axis speeds are tied together, others are independent
         '''
 
-        command = 'G0'
+        command = self.codes['seek']
 
         if data.get('xyz') != None:
-            command += ' F{0}'.format(data['xyz'])
+            command += ' '
+            command += self.speed_axis['xyz']
+            command += str(data['xyz'])
         if data.get('a') != None:
-            command += ' a{0}'.format(data['a'])
+            command += ' '
+            command += self.speed_axis['a']
+            command += str(data['a'])
         if data.get('b') != None:
-            command += ' b{0}'.format(data['b'])
+            command += ' '
+            command += self.speed_axis['b']
+            command += str(data['b'])
 
-        if command!='G0':
+        if command!=self.codes['seek']:
             return [command]
         else:
             return []
@@ -143,18 +172,26 @@ class GCodeCompiler(object):
         create 'acceleration' gcode: XY axis accelerations are tied together, others are independent
         '''
 
-        command = 'M204'
+        command = self.codes['accel']
 
         if data.get('xy') != None:
-            command += ' S{}'.format(data.get('xy'))
+            command += ' '
+            command += self.accel_axis['xy']
+            command += str(data['xy'])
         if data.get('z') != None:
-            command += ' Z{}'.format(data.get('z'))
+            command += ' '
+            command += self.accel_axis['z']
+            command += str(data['z'])
         if data.get('a') != None:
-             command += ' A{}'.format(data.get('a'))
+            command += ' '
+            command += self.accel_axis['a']
+            command += str(data['a'])
         if data.get('b') != None:
-             command += ' B{}'.format(data.get('b'))
+            command += ' '
+            command += self.accel_axis['b']
+            command += str(data['b'])
 
-        if command!='M204':
+        if command!=self.codes['accel']:
             return [command]
         else:
             return []
@@ -163,7 +200,7 @@ class GCodeCompiler(object):
         '''
         create 'hardstop' gcode: halt the motor driver, then reset it
         '''
-        return ['M112','M999']
+        return [self.codes['hardstop'],self.codes['reset']]
 
 
 
