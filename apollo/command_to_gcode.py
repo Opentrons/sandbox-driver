@@ -54,12 +54,15 @@ class GCodeCompiler(object):
 
     def __init__(self):
 
+        # axis are given a predefined order, making testing easier
         self.axis = {
             'seek'  : ['x','y','z','a','b'],
             'speed' : ['xyz'      ,'a','b'],
             'accel' : ['xy'   ,'z','a','b']
         }
 
+        # dict of gcode commands
+        # only one command at a time (with its arguments) is sent to smoothie-com
         self.commands = {
             'seek'      : 'G0',
             'speed'     : 'G0',
@@ -71,6 +74,7 @@ class GCodeCompiler(object):
             'reset'     : 'M999'
         }
 
+        # labels for any value passed with a command
         self.codes = {
             'seek' : {
                 'x'     : 'X',
@@ -98,6 +102,7 @@ class GCodeCompiler(object):
 
         '''
         method to create GCode values for each supplied axis
+        returns a string
         '''
 
         temp_string = ''
@@ -117,12 +122,14 @@ class GCodeCompiler(object):
 
         '''
         apply a given axis' commands/codes to the supplied front-end data
+        returns a string
         '''
 
         tstring = self.commands[type]
 
         tstring += self.parse_values(data,type)
 
+        # only return the string if it has grown beyond the initial command
         if tstring!=self.commands[type]:
             return tstring
         else:
@@ -132,6 +139,7 @@ class GCodeCompiler(object):
 
         '''
         create absolute or relative movement gcode
+        returns array of strings
         '''
 
         com = self.commands['move_rel'] if data.get('relative',False) else self.commands['move_abs']
@@ -143,6 +151,7 @@ class GCodeCompiler(object):
 
         '''
         create 'speed' gcode
+        returns array of strings
         '''
 
         return [self.create_command_string(data,'speed')]
@@ -151,6 +160,7 @@ class GCodeCompiler(object):
     def command_acceleration(self,data):
         '''
         create 'acceleration' gcode
+        returns array of strings
         '''
 
         return [self.create_command_string(data,'accel')]
@@ -159,6 +169,7 @@ class GCodeCompiler(object):
 
         '''
         create 'home' gcode: if no axis are specified, all axis are homed at once
+        returns array of strings
         '''
 
         tstring = self.commands['home']
@@ -173,6 +184,7 @@ class GCodeCompiler(object):
     def command_hardstop(self,data):
         '''
         create 'hardstop' gcode: halt the motor driver, then reset it
+        returns array of strings
         '''
         return [self.commands['hardstop'],self.commands['reset']]
 
