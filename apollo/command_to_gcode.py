@@ -2,6 +2,8 @@ import asyncio
 
 from apollo.smoothie import SmoothieCom
 
+from config.settings import Config
+
 class CommandToGCode(object): 
 
     '''
@@ -12,51 +14,7 @@ class CommandToGCode(object):
 
     def __init__(self):
 
-        self.smoothie_com = SmoothieCom('localhost', 8000)
-
-        # axis are given a predefined order, making testing easier
-        self._command_axis = {
-            'seek'  :           ['x','y','z','a','b'],
-            'speed' :           ['xyz','a','b'],
-            'acceleration' :    ['xy','z','a','b']
-        }
-
-        # dict of gcode commands
-        # only one command (plus its arguments/values) is sent to smoothie-com at a time
-        self._gcode_commands = {
-            'seek'          : 'G0',
-            'speed'         : 'G0',
-            'move_abs'      : 'G90',
-            'move_rel'      : 'G91',
-            'home'          : 'G28',
-            'acceleration'  : 'M204',
-            'hardstop'      : 'M112',
-            'reset'         : 'M999'
-        }
-
-        # labels for any value passed with a command
-        self._gcode_keys = {
-            'seek' : {
-                'x'     : 'X',
-                'y'     : 'Y',
-                'z'     : 'Z',
-                'a'     : 'A',
-                'b'     : 'B'
-            },
-            # XYZ speeds are tied together, others are independent
-            'speed' : {
-                'xyz'   : 'F',
-                'a'     : 'a',
-                'b'     : 'b'
-            },
-            # XY accelerations are tied together, others are independent
-            'acceleration' : {
-                'xy'    : 'S',
-                'z'     : 'Z',
-                'a'     : 'A',
-                'b'     : 'B'
-            }
-        }
+        self.smoothie_com = SmoothieCom(Config.SMOOTHIE_URL, Config.SMOOTHIE_PORT)
 
     @asyncio.coroutine
     def connect(self):
@@ -94,14 +52,14 @@ class CommandToGCode(object):
 
         temp_string = ''
 
-        for axis in self._command_axis.get(type,[]):
+        for axis in Config.GCODE_AXIS.get(type,[]):
             if data.get(axis,None):
-                temp_key = self._gcode_keys[type][axis]
+                temp_key = Config.GCODE_KEYS[type][axis]
                 temp_string += ' {0}{1}'.format( temp_key , data[axis] )
 
         # only return the string if it has grown beyond the initial command
         if len(temp_string):
-            return self._gcode_commands[type] + temp_string # prepend with the appropriate gcode command
+            return Config.GCODE_COMMANDS[type] + temp_string # prepend with the appropriate gcode command
         else:
             return ''
 
@@ -112,7 +70,7 @@ class CommandToGCode(object):
         returns array of strings
         '''
 
-        mode = self._gcode_commands['move_rel'] if data.get('relative',False) else self._gcode_commands['move_abs']
+        mode = Config.GCODE_COMMANDS['move_rel'] if data.get('relative',False) else Config.GCODE_COMMANDS['move_abs']
 
         return [ mode , self.create_command_string(data,'seek') ]
 
@@ -142,7 +100,7 @@ class CommandToGCode(object):
         returns array of strings
         '''
 
-        temp_string = self._gcode_commands['home']
+        temp_string = Config.GCODE_COMMANDS['home']
             
         for n in (data if data else []): # a None might be passed
             temp_string += ' {}'.format(str(n[0]).upper()) # UPPER CASE
@@ -154,6 +112,6 @@ class CommandToGCode(object):
         create 'hardstop' gcode: halt the motor driver, then reset it
         returns array of strings
         '''
-        return [ self._gcode_commands['hardstop'] , self._gcode_commands['reset'] ]
+        return [ Config.GCODE_COMMANDS['hardstop'] , Config.GCODE_COMMANDS['reset'] ]
 
 
