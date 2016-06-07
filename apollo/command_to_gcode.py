@@ -35,7 +35,7 @@ class CommandProcessor(object):
         '''
         receive front-end commands, and convert them to GCode
         '''
-        com_type = command.get('type', None)
+        com_type = 'command_{}'.format(command.get('type', ''))
         com_data = command.get('data', {})
 
         gcode_creator = getattr(self.compiler, com_type, None)
@@ -63,8 +63,8 @@ class GCodeCompiler(object):
         self.commands = {
             'seek'      : 'G0',
             'speed'     : 'G0',
-            'move_to'   : 'G90',
-            'move'      : 'G91',
+            'move_abs'  : 'G90',
+            'move_rel'  : 'G91',
             'home'      : 'G28',
             'accel'     : 'M204',
             'hardstop'  : 'M112',
@@ -79,13 +79,13 @@ class GCodeCompiler(object):
                 'a'     : 'A',
                 'b'     : 'B'
             },
-            # XYZ axis speeds are tied together, others are independent
+            # XYZ speeds are tied together, others are independent
             'speed' : {
                 'xyz'   : 'F',
                 'a'     : 'a',
                 'b'     : 'b'
             },
-            # XY axis accelerations are tied together, others are independent
+            # XY accelerations are tied together, others are independent
             'accel' : {
                 'xy'    : 'S',
                 'z'     : 'Z',
@@ -113,7 +113,7 @@ class GCodeCompiler(object):
 
         return temp_string
 
-    def create_command(self,data,type):
+    def create_command_string(self,data,type):
 
         '''
         apply a given axis' commands/codes to the supplied front-end data
@@ -128,40 +128,34 @@ class GCodeCompiler(object):
         else:
             return ''
 
-    def move(self,data):
+    def command_move(self,data):
 
         '''
-        create relative movement gcode
+        create absolute or relative movement gcode
         '''
 
-        return [ self.commands['move'] , self.create_command(data,'seek') ]
+        com = self.commands['move_rel'] if data.get('relative',False) else self.commands['move_abs']
+
+        return [ com , self.create_command_string(data,'seek') ]
 
 
-    def move_to(self,data):
-
-        '''
-        create absolute movement gcode
-        '''
-
-        return [ self.commands['move_to'] , self.create_command(data,'seek') ]
-
-    def speed(self,data):
+    def command_speed(self,data):
 
         '''
         create 'speed' gcode
         '''
 
-        return [self.create_command(data,'speed')]
+        return [self.create_command_string(data,'speed')]
 
 
-    def acceleration(self,data):
+    def command_acceleration(self,data):
         '''
         create 'acceleration' gcode
         '''
 
-        return [self.create_command(data,'accel')]
+        return [self.create_command_string(data,'accel')]
 
-    def home(self,data):
+    def command_home(self,data):
 
         '''
         create 'home' gcode: if no axis are specified, all axis are homed at once
@@ -176,7 +170,7 @@ class GCodeCompiler(object):
 
         return [tstring]
 
-    def hardstop(self,data):
+    def command_hardstop(self,data):
         '''
         create 'hardstop' gcode: halt the motor driver, then reset it
         '''

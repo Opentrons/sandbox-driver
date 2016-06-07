@@ -23,14 +23,15 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.processor.smoothie_com.send = mMock
 
 
-    def test_move_command(self):
+    def test_move_rel_command(self):
         '''
-        Testing the 'move' command for absolute coordinates
+        Testing the 'move' command for relative coordinates
         '''
 
         self.loop.run_until_complete(self.processor.process({
             'type':'move',
             'data': {
+                'relative' : True,
                 'x': 100.123,
                 'y': 200.234,
                 'z': -300.987,
@@ -50,13 +51,13 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.mock.reset_mock()
 
 
-    def test_move_to_command(self):
+    def test_move_abs_command(self):
         '''
-        Testing the 'move_to' command for relative coordinates
+        Testing the 'move' command for absolute coordinates
         '''
 
         self.loop.run_until_complete(self.processor.process({
-            'type':'move_to',
+            'type':'move',
             'data': {
                 'x': 100,
                 'y': 200,
