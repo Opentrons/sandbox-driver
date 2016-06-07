@@ -35,7 +35,7 @@ class CommandProcessor(object):
         '''
         receive front-end commands, and convert them to GCode
         '''
-        com_type = 'command_{}'.format(command.get('type', ''))
+        com_type = command.get('type', '')
         com_data = command.get('data', {})
 
         gcode_creator = getattr(self.compiler, com_type, None)
@@ -55,27 +55,27 @@ class GCodeCompiler(object):
     def __init__(self):
 
         # axis are given a predefined order, making testing easier
-        self.axis = {
+        self.command_axis = {
             'seek'  : ['x','y','z','a','b'],
             'speed' : ['xyz'      ,'a','b'],
-            'accel' : ['xy'   ,'z','a','b']
+            'acceleration' : ['xy'   ,'z','a','b']
         }
 
         # dict of gcode commands
-        # only one command at a time (with its arguments) is sent to smoothie-com
-        self.commands = {
-            'seek'      : 'G0',
-            'speed'     : 'G0',
-            'move_abs'  : 'G90',
-            'move_rel'  : 'G91',
-            'home'      : 'G28',
-            'accel'     : 'M204',
-            'hardstop'  : 'M112',
-            'reset'     : 'M999'
+        # only one command (plus its arguments/values) is sent to smoothie-com at a time
+        self.gcode_commands = {
+            'seek'          : 'G0',
+            'speed'         : 'G0',
+            'move_abs'      : 'G90',
+            'move_rel'      : 'G91',
+            'home'          : 'G28',
+            'acceleration'  : 'M204',
+            'hardstop'      : 'M112',
+            'reset'         : 'M999'
         }
 
         # labels for any value passed with a command
-        self.codes = {
+        self.gcode_keys = {
             'seek' : {
                 'x'     : 'X',
                 'y'     : 'Y',
@@ -90,7 +90,7 @@ class GCodeCompiler(object):
                 'b'     : 'b'
             },
             # XY accelerations are tied together, others are independent
-            'accel' : {
+            'acceleration' : {
                 'xy'    : 'S',
                 'z'     : 'Z',
                 'a'     : 'A',
@@ -107,14 +107,12 @@ class GCodeCompiler(object):
 
         temp_string = ''
 
-        for ax in self.axis[type]:
-            
-            val = data.get(ax,None)
-            
-            if val!=None:
-                temp_string += ' '                    # ascii space
-                temp_string += self.codes[type][ax]   # axis
-                temp_string += str(val)               # value
+        for axis in self.command_axis.get(type,[]):
+                        
+            if data.get(axis,None):
+                temp_string += ' '                          # ascii space
+                temp_string += self.gcode_keys[type][axis]  # axis
+                temp_string += str(data[axis])              # value
 
         return temp_string
 
@@ -125,68 +123,66 @@ class GCodeCompiler(object):
         returns a string
         '''
 
-        tstring = self.commands[type]
-
-        tstring += self.parse_values(data,type)
+        temp_string = self.parse_values(data,type)
 
         # only return the string if it has grown beyond the initial command
-        if tstring!=self.commands[type]:
-            return tstring
+        if temp_string:
+            return self.gcode_commands[type] + temp_string
         else:
             return ''
 
-    def command_move(self,data):
+    def move(self,data):
 
         '''
         create absolute or relative movement gcode
         returns array of strings
         '''
 
-        com = self.commands['move_rel'] if data.get('relative',False) else self.commands['move_abs']
+        mode_command = self.gcode_commands['move_rel'] if data.get('relative',False) else self.gcode_commands['move_abs']
 
-        return [ com , self.create_command_string(data,'seek') ]
+        return [ mode_command , self.create_command_string(data,'seek') ]
 
 
-    def command_speed(self,data):
+    def speed(self,data):
 
         '''
         create 'speed' gcode
         returns array of strings
         '''
 
-        return [self.create_command_string(data,'speed')]
+        return [ self.create_command_string(data,'speed') ]
 
 
-    def command_acceleration(self,data):
+    def acceleration(self,data):
         '''
         create 'acceleration' gcode
         returns array of strings
         '''
 
-        return [self.create_command_string(data,'accel')]
+        return [ self.create_command_string(data,'acceleration') ]
 
-    def command_home(self,data):
+    def home(self,data):
 
         '''
         create 'home' gcode: if no axis are specified, all axis are homed at once
         returns array of strings
         '''
 
-        tstring = self.commands['home']
+        temp_string = self.gcode_commands['home']
             
         if data: # a None might be passed
             for n in data:
-                tstring += ' '
-                tstring += str(n).upper() # UPPER CASE
+                temp_string += ' '
+                temp_string += str(n[0]).upper() # UPPER CASE
 
-        return [tstring]
+        return [ temp_string ]
 
-    def command_hardstop(self,data):
+    def hardstop(self,data):
         '''
         create 'hardstop' gcode: halt the motor driver, then reset it
         returns array of strings
         '''
-        return [self.commands['hardstop'],self.commands['reset']]
+        return [ self.gcode_commands['hardstop'] , self.gcode_commands['reset'] ]
 
 
 
