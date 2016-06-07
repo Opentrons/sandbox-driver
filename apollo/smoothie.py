@@ -46,7 +46,7 @@ class SmoothieCom(object):
         yield from self.writer.drain()
 
     @asyncio.coroutine
-    def send(self, gcode, response_handler):
+    def send(self, gcode, response_handler=None):
         # Skip if command is EMERGENCY STOP or RESET FROM HALT
         if not (gcode == 'M112' or gcode == 'M999'):
             yield from self.turn_on_feedback()
