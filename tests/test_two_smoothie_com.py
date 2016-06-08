@@ -6,10 +6,8 @@ import apollo.utils
 from apollo.smoothie import SmoothieCom
 
 
-mock_initiation = ['Smoothie', 'ok']
 mock_messages_in = []
 mock_messages_out = []
-mock_address = apollo.utils.get_free_os_address()
 
 
 @asyncio.coroutine
@@ -29,16 +27,14 @@ class MockSmoothieServer():
         if not loop:
             self.loop = asyncio.get_event_loop()
         self.clients = {}
+        self.mock_initiation = ['Smoothie', 'ok']
 
     def _accept_client(self, client_reader, client_writer):
-        # LOAD LOCAL COPY OF MOCK INITIATION 
-        local_mock_initiation = []
-        [local_mock_initiation.append(x) for x in mock_initiation]
         task = asyncio.Task(self._handle_client(client_reader, client_writer))
         self.clients[task] = (client_reader, client_writer)
-        client_writer.write('{}{}'.format(local_mock_initiation.pop(0),'\r\n').encode('utf-8'))
+        client_writer.write('{}{}'.format(self.mock_initiation.pop(0),'\r\n').encode('utf-8'))
         yield from client_writer.drain()
-        client_writer.write('{}{}'.format(local_mock_initiation.pop(0),'\r\n').encode('utf-8'))
+        client_writer.write('{}{}'.format(self.mock_initiation.pop(0),'\r\n').encode('utf-8'))
         yield from client_writer.drain()
 
         def client_done(task):
@@ -99,6 +95,11 @@ class MockSmoothieServer():
 class SmoothieComSendTest(unittest.TestCase):
 
     def setUp(self):
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        mock_address = apollo.utils.get_free_os_address()
+        self.mock_server = MockSmoothieServer(mock_address[0], mock_address[1])
+        self.mock_server.start(self.loop)
 #        mocked._read = mock_read
         self.mock_smc = SmoothieCom(
                                 mock_address[0],
@@ -106,6 +107,9 @@ class SmoothieComSendTest(unittest.TestCase):
                             )
         self.mock_smc.write_and_drain = mock_write_and_drain
         mock_messages_out = []
+
+    def tearDown(self):
+        self.mock_server.stop(self.loop)
 
     def test_connect(self):
         """ TEST CONNECTING """
@@ -124,9 +128,5 @@ class SmoothieComSendTest(unittest.TestCase):
         self.assertEqual(expected_messages_out, mock_messages_out)
         
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    mock_server = MockSmoothieServer(mock_address[0], mock_address[1])
-    mock_server.start(loop)
     unittest.main()
-    mock_server.stop()
 
