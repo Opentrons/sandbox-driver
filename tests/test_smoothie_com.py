@@ -1,15 +1,8 @@
 import asyncio
 import unittest
-from unittest import mock
 import apollo.utils
 
 from apollo.smoothie import SmoothieCom
-
-def get_mock_coro(return_value):
-    @asyncio.coroutine
-    def mock_coro(*args, **kwargs):
-        return return_value
-    return mock.Mock(wraps=mock_coro)
 
 
 class Reader(object):
