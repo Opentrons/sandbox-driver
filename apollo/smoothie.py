@@ -53,7 +53,6 @@ class SmoothieCom(object):
 
         delimited_gcode = self.get_delimited_gcode(gcode)
 
-        # TODO: refactor into write and drain method coro
         yield from self.write_and_drain(delimited_gcode)
 
         if response_handler and asyncio.iscoroutine(response_handler):
@@ -66,7 +65,7 @@ class SmoothieCom(object):
             response = (yield from self._read())
 
             # TODO: do proper logging and remove print statements
-            logger.debug('Smoothie response: {}'.format(response))
+            logger.info('Smoothie response: {}'.format(response))
 
             # Handle M114 GCode
             if gcode == 'M114' and not is_gcode_done:
@@ -74,12 +73,15 @@ class SmoothieCom(object):
                     status, data = response.split(' ')
                     json_result = json.loads(data)
                     is_gcode_done = True
-                    logger.debug('formatted data', json_result)
+                    logger.info('formatted data', json_result)
                 except ValueError:
                     pass
 
             # Handle G0 GCode
             if gcode.startswith('G0') and not is_gcode_done:
+                if response_handler and asyncio.iscoroutine(response_handler):
+                    yield from response_handler('gcode progress', response)
+
                 if response == '{"stat":0}':
                     is_gcode_done = True
 
@@ -88,17 +90,17 @@ class SmoothieCom(object):
                 if response == 'ok':
                     is_gcode_done = True
 
-            # TODO: G28
+            # Handle G28
             if gcode.startswith('G28') and not is_gcode_done:
                 if response == '{"stat":0}':
                     is_gcode_done  = True
 
-            # TODO: G90
+            # Handle G90
             if gcode.startswith('G90') and not is_gcode_done:
                 if response == 'ok':
                     is_gcode_done = True
 
-            # TODO: M112
+            # Handle M112
             if gcode.startswith('M112') and not is_gcode_done:
                 if response.startswith('ok') or response == '{"!!":"!!"}':
                     gcode = 'M999'
