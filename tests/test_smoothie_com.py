@@ -1,32 +1,8 @@
 import asyncio
 import unittest
-import apollo.utils
+from apollo import utils
 
 from apollo.smoothie import SmoothieCom
-
-
-class Reader(object):
-    def __init__(self, read_sequence):
-        self.q = asyncio.Queue()
-        [self.q.put_nowait(i) for i in read_sequence]
-
-    @asyncio.coroutine
-    def _read(self):
-        return (yield from self.q.get())
-
-class Writer(object):
-    def __init__(self):
-        self.write_buffer = []
-        self.drain_buffer = []
-
-    def write(self, data):
-        self.write_buffer.append(data)
-
-    @asyncio.coroutine
-    def drain(self):
-        for item in self.write_buffer:
-            self.drain_buffer.append(item)
-        self.write_buffer = []
 
 
 class SmoothieComTest(unittest.TestCase):
@@ -34,7 +10,7 @@ class SmoothieComTest(unittest.TestCase):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        self.address = apollo.utils.get_free_os_address()
+        self.address = utils.get_free_os_address()
         self.smc = SmoothieCom(
             self.address[0],
             self.address[1],
@@ -51,8 +27,8 @@ class SmoothieComTest(unittest.TestCase):
 
         smoothie_write_sequence = [b'M62\r\n', b'M114\r\n', b'M63\r\n']
 
-        self.smc.writer = Writer()
-        self.smc._read = Reader(smoothie_read_sequence)._read
+        self.smc.writer = utils.Writer()
+        self.smc._read = utils.Reader(smoothie_read_sequence)._read
 
         self.loop.run_until_complete(self.smc.send('M114', None))
 
