@@ -11,9 +11,13 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.mock = mock.Mock()
 
+        self.coords = {'X':0,'Y':0,'Z':0,'A':0,'B':0,'x':0,'y':0,'z':0,'a':0,'b':0}
+
         @asyncio.coroutine
         def mMock(m):
             self.mock(m)
+            if m[0:4] == 'M114':
+                return self.coords
 
 
         self.loop = asyncio.new_event_loop()
@@ -72,6 +76,57 @@ class CommandToGCodeTestCase(unittest.TestCase):
         expected = [
             mock.call('G90'),
             mock.call('G0 X100 Y200 Z300 A10 B20'),
+        ]
+
+        self.assertEquals(expected, result)
+        self.mock.reset_mock()
+
+
+    def test_position_get_command(self):
+        '''
+        Testing the 'position' command for getting the current axis values
+        '''
+
+        @asyncio.coroutine
+        def change_position():
+            returned_value = yield from self.com2gcode.process({
+                'type':'position',
+                'data': None
+            })
+            self.assertEquals({'x':0,'y':0,'z':0,'a':0,'b':0}, returned_value)
+
+        self.loop.run_until_complete(change_position())
+
+        result = self.mock.call_args_list
+
+        expected = [
+            mock.call('M114')
+        ]
+
+        self.assertEquals(expected, result)
+        self.mock.reset_mock()
+
+
+    def test_position_set_command(self):
+        '''
+        Testing the 'position' command for setting the current axis values to something new
+        '''
+
+        self.loop.run_until_complete(self.com2gcode.process({
+            'type':'position',
+            'data': {
+                'x' : 123,
+                'y' : 321.123,
+                'z' : 34.02,
+                'a' : 12,
+                'b' : 444
+            }
+        }))
+
+        result = self.mock.call_args_list
+
+        expected = [
+            mock.call('G92 X123 Y321.123 Z34.02 A12 B444')
         ]
 
         self.assertEquals(expected, result)

@@ -7,21 +7,23 @@ from config.settings import Config
 class CommandToGCode(object): 
 
     '''
-    class for handling received front-end commands
-    converting them to GCode
-    and sending GCode to Smoothie-Com
+    this module converts front-end commands to GCode
+    then sends GCode strings to Smoothie-Com module
     '''
 
     def __init__(self):
 
         self.smoothie_com = SmoothieCom(Config.SMOOTHIE_URL, Config.SMOOTHIE_PORT)
 
+
     @asyncio.coroutine
     def connect(self):
         '''
         tell the smoothie module to connect to the motor controller
+        return True if successful
         '''
-        yield from self.smoothie_com.connect()
+        return (yield from self.smoothie_com.connect())
+
 
     @asyncio.coroutine
     def send_gcode(self,string):
@@ -29,24 +31,55 @@ class CommandToGCode(object):
         send a GCode string to the smoothie module
         '''
         if len(string):
-            yield from self.smoothie_com.send(string)
+            return (yield from self.smoothie_com.send(string))
+
 
     @asyncio.coroutine
     def process(self, command):
         '''
         receive front-end commands, and convert them to GCode
+        returns None or a coordinate dict
         '''
         
+        # check to see if this module has a method matching the command's 'type'
         method = getattr(self, command.get('type', '') , None)
 
         if method:
-            for line in method( command.get('data',{}) ):
-                yield from self.send_gcode(line)
 
-    def create_command_string(self,data,type):
+            coords = None
+
+            # pass the data to the matching method, returning an array of gcode strings
+            for line in method( command.get('data',{}) ):
+
+                ret = yield from self.send_gcode(line)
+
+                if ret != None:
+                    coords = self.parse_coordinates(ret)
+
+            return coords
+
+
+    def parse_coordinates(self,coords):
+        '''
+        removes unnecessary data from the coordinates object returned from smoothie-com
+        returns a dict
+        '''
+
+        if type(coords) is dict:
+
+            new_coords = {}
+
+            for axis, label in Config.GCODE_KEYS['position'].items():
+                if coords.get(label,None) != None:
+                    new_coords[axis] = coords[label]
+
+            return new_coords
+
+
+    def create_gcode_string(self,data,type):
 
         '''
-        turn a front-end command dict into the equivalent gcode string
+        turns a front-end command dict into the equivalent gcode string
         returns a string
         '''
 
@@ -63,6 +96,7 @@ class CommandToGCode(object):
         else:
             return ''
 
+
     def move(self,data):
 
         '''
@@ -72,7 +106,20 @@ class CommandToGCode(object):
 
         mode = Config.GCODE_COMMANDS['move_rel'] if data.get('relative',False) else Config.GCODE_COMMANDS['move_abs']
 
-        return [ mode , self.create_command_string(data,'seek') ]
+        return [ mode , self.create_gcode_string(data,'move') ]
+
+
+    def position(self,data):
+
+        '''
+        GET or SET the current axis positions
+        returns array of strings
+        '''
+
+        if data and type(data) is dict and len(data.keys()):
+            return [ self.create_gcode_string(data,'position') ]
+        else:
+            return [ Config.GCODE_COMMANDS['position_get'] ]
 
 
     def speed(self,data):
@@ -82,7 +129,7 @@ class CommandToGCode(object):
         returns array of strings
         '''
 
-        return [ self.create_command_string(data,'speed') ]
+        return [ self.create_gcode_string(data,'speed') ]
 
 
     def acceleration(self,data):
@@ -91,7 +138,8 @@ class CommandToGCode(object):
         returns array of strings
         '''
 
-        return [ self.create_command_string(data,'acceleration') ]
+        return [ self.create_gcode_string(data,'acceleration') ]
+
 
     def home(self,data):
 
@@ -106,6 +154,7 @@ class CommandToGCode(object):
             temp_string += ' {}'.format(str(n[0]).upper()) # UPPER CASE
 
         return [ temp_string ]
+
 
     def hardstop(self,data):
         '''

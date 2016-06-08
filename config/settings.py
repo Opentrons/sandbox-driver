@@ -17,7 +17,8 @@ class Config(object):
 
     # axis are given a predefined order, making testing easier
     GCODE_AXIS = {
-        'seek'  :           ['x','y','z','a','b'],
+        'move'  :           ['x','y','z','a','b'],
+        'position' :        ['x','y','z','a','b'],
         'speed' :           ['xyz','a','b'],
         'acceleration' :    ['xy','z','a','b']
     }
@@ -25,7 +26,9 @@ class Config(object):
     # dict of gcode commands
     # only one command (plus its arguments/values) is sent to smoothie-com at a time
     GCODE_COMMANDS = {
-        'seek'          : 'G0',
+        'move'          : 'G0',
+        'position'      : 'G92',
+        'position_get'  : 'M114',
         'speed'         : 'G0',
         'move_abs'      : 'G90',
         'move_rel'      : 'G91',
@@ -37,7 +40,14 @@ class Config(object):
 
     # labels for any value passed with a command
     GCODE_KEYS = {
-        'seek' : {
+        'move' : {
+            'x'     : 'X',
+            'y'     : 'Y',
+            'z'     : 'Z',
+            'a'     : 'A',
+            'b'     : 'B'
+        },
+        'position' : {
             'x'     : 'X',
             'y'     : 'Y',
             'z'     : 'Z',
