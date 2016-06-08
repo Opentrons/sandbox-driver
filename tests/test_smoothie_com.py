@@ -9,24 +9,25 @@ def get_mock_coro(return_value):
     @asyncio.coroutine
     def mock_coro(*args, **kwargs):
         return return_value
-
     return mock.Mock(wraps=mock_coro)
 
 
 class Reader(object):
+    def __init__(self, read_sequence):
+        self.q = asyncio.Queue()
+        [self.q.put_nowait(i) for i in read_sequence]
+
     @asyncio.coroutine
-    def readline(self):
-        yield from 1
+    def _read(self):
+        return (yield from self.q.get())
 
 class Writer(object):
     def __init__(self):
         self.write_buffer = []
         self.drain_buffer = []
 
-    @asyncio.coroutine
     def write(self, data):
         self.write_buffer.append(data)
-        print('write buffer has', self.write_buffer)
 
     @asyncio.coroutine
     def drain(self):
@@ -37,46 +38,33 @@ class Writer(object):
 
 class SmoothieComTest(unittest.TestCase):
     def setUp(self):
-        # asyncio.set_event_loop(None)
-        # self.loop = asyncio.new_event_loop()
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
 
         self.address = apollo.utils.get_free_os_address()
         self.smc = SmoothieCom(
             self.address[0],
             self.address[1],
-            # self.loop,
         )
 
-    def run_in_loop(self, coro):
-        return self.loop.run_until_complete(coro)
-
     def test_send_M114_gcode(self):
+        smoothie_read_sequence = [
+            'feedback engaged',
+            'ok',
+            'ok {"foo":123}',
+            'feedback disengaged',
+            'ok',
+        ]
+
+        smoothie_write_sequence = [b'M62\r\n', b'M114\r\n', b'M63\r\n']
+
         self.smc.writer = Writer()
-        self.smc.reader = Reader()
+        self.smc._read = Reader(smoothie_read_sequence)._read
 
         self.loop.run_until_complete(self.smc.send('M114', None))
 
-        import pdb; pdb.set_trace()
+        self.assertEqual(self.smc.writer.drain_buffer, smoothie_write_sequence)
 
-
-    # def test_send_G0_gcode(self):
-    #     pass
-    #
-    # def test_send_G1_gcode(self):
-    #     pass
-    #
-    # def test_send_G21_gcode(self):
-    #     pass
-    #
-    # def test_turn_off_feedback(self):
-    #     pass
-    #
-    # def test_turn_on_feedback(self):
-    #     pass
-    #
-    #
-    #
 
 
 if __name__ == '__main__':
