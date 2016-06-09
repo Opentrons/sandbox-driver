@@ -3,12 +3,11 @@
 import asyncio
 import logging
 import multiprocessing
-import queue
 
 from autobahn.asyncio import wamp
 
-from config.settings import Config
 from apollo import utils
+from config.settings import Config
 
 
 logger = logging.getLogger()
@@ -16,6 +15,19 @@ logger = logging.getLogger()
 
 class CommandProcessorComponent(wamp.ApplicationSession):
     """WAMP application session for Controller"""
+
+    def on_erase(self, command_queue):
+        logger.info('Erase control command received')
+        utils.flush_queue(command_queue)
+
+    def on_pause(self):
+        logger.info('Pause control command received')
+
+    def on_resume(self):
+        logger.info('Resume control command received')
+
+    def on_terminate(self):
+        logger.info('Terminate control command received')
 
     @asyncio.coroutine
     def onJoin(self, details):
@@ -30,34 +42,39 @@ class CommandProcessorComponent(wamp.ApplicationSession):
         if not control_queue:
             raise Exception('A control_queue must be set in self.config.extra')
 
-
         while True:
             # Handle control packets if any exist
             if control_queue.qsize() > 0:
-                cnt_msg = yield from utils.coro_queue_get(control_queue)
-                if cnt_msg == 'pause':
+                packet = yield from utils.coro_queue_get(control_queue)
+                pkt_type = packet.get('type')
+                if pkt_type == 'pause':
+                    self.on_pause()
                     while True:
-                        cnt_msg = yield from utils.coro_queue_get(control_queue)
-                        if cnt_msg == 'resume':
+                        packet = yield from utils.coro_queue_get(control_queue)
+                        pkt_type = packet.get('type')
+                        if pkt_type == 'resume':
+                            self.on_resume()
                             break
                         yield from asyncio.sleep(0.1)
-                elif cnt_msg == 'erase':
-                    utils.flush_queue(command_queue)
+                elif pkt_type == 'erase':
+                    self.on_erase(command_queue)
                     continue
-                elif cnt_msg == 'resume':
-                    pass
+                elif pkt_type == 'resume':
+                    self.on_resume()
+                elif pkt_type == 'terminate':
+                    self.on_terminate()
+                    return
                 else:
-                    logger.error('Received unknown control message: {}'.format(cnt_msg))
-                    break
+                    logger.error('Received unknown control message: {}'.format(pkt_type))
 
             # Handle command packets (loop suspends execution if queue is empty)
             cmd_pkt = yield from utils.coro_queue_get(command_queue)
 
-            # Poison pill case.
             if cmd_pkt is None:
-                break
+                logger.info('Received None in command_queue. Shutting down.')
+                return
 
-            pkt_id = cmd_pkt.get('id', 'ID NOT FOUND')
+            pkt_id = cmd_pkt.get('id', 'NA')
 
             # TODO: execute roboto message and publish result
 
