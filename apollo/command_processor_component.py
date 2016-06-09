@@ -31,6 +31,15 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
     @asyncio.coroutine
     def onJoin(self, details):
+        """
+        :param details:
+        :return:
+
+        Listens to control commands from control_queue
+        Listens to command commands from command_queue.
+
+        control_queue packets take priority in hanlding over command_queue packets
+        """
         logger.info('CommandProcessorComponent joined')
 
         command_queue = self.config.extra.get('command_queue')
@@ -76,7 +85,7 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
             pkt_id = cmd_pkt.get('id', 'NA')
 
-            # TODO: execute roboto message and publish result
+            # TODO: execute robo message and publish result
 
             logger.debug('Dequeued Message ID: {} with {}'.format(pkt_id, cmd_pkt))
             self.publish(Config.ROBOT_TO_BROWSER_TOPIC, cmd_pkt)
