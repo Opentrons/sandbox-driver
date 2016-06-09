@@ -100,11 +100,11 @@ class SmoothieComSendTest(unittest.TestCase):
         mock_address = apollo.utils.get_free_os_address()
         self.mock_server = MockSmoothieServer(mock_address[0], mock_address[1])
         self.mock_server.start(self.loop)
-#        mocked._read = mock_read
         self.mock_smc = SmoothieCom(
                                 mock_address[0],
                                 mock_address[1]
                             )
+        # SWITCH WRITE_AND_DRAIN TO PICK OFF DATA TO BE SENT OUT
         self.mock_smc.write_and_drain = mock_write_and_drain
         mock_messages_out = []
 
@@ -127,6 +127,10 @@ class SmoothieComSendTest(unittest.TestCase):
         print('Actual Messages out:', mock_messages_out)
         self.assertEqual(expected_messages_out, mock_messages_out)
         
+    def test_send_G0_gcode(self):
+        """ TEST SENDING G0 """
+
+
 if __name__ == '__main__':
     unittest.main()
 

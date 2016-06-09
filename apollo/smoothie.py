@@ -6,6 +6,9 @@ import concurrent
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
+class SmoothieMaxReadsException(Exception):
+    def __init__(self, gcode=None):
+        self.gcode = gcode
 
 class SmoothieCom(object):
     def __init__(self, host, port, loop=None):
@@ -42,8 +45,11 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def write_and_drain(self, message):
-        self.writer.write(message.encode('utf-8'))
-        yield from self.writer.drain()
+        try:
+            self.writer.write(message.encode('utf-8'))
+            yield from self.writer.drain()
+        except Exception as exc:
+            logger.error('Exception in write_and_drain: {}'.format(exc))
 
     @asyncio.coroutine
     def send(self, gcode, response_handler=None):
@@ -61,10 +67,15 @@ class SmoothieCom(object):
         is_gcode_done = False
         json_result = None
 
+        counter = 0
         while not is_gcode_done:
+            counter += 1
+            if counter > 9:
+                break
+                raise SmoothieMaxReadsException(gcode) 
+
             response = (yield from self._read())
 
-            # TODO: do proper logging and remove print statements
             logger.info('Smoothie response: {}'.format(response))
 
             # Handle M114 GCode
@@ -85,29 +96,60 @@ class SmoothieCom(object):
                 if response == '{"stat":0}':
                     is_gcode_done = True
 
-            # Handle G92 GCode
-            if gcode.startswith('G92') and not is_gcode_done:
-                if response == 'ok':
-                    is_gcode_done = True
-
             # Handle G28
             if gcode.startswith('G28') and not is_gcode_done:
                 if response == '{"stat":0}':
                     is_gcode_done  = True
+        
+            # Handle G92 GCode
+            if gcode.startswith('G92') and not is_gcode_done:
+                if response == 'ok':
+                    is_gcode_done = True
 
             # Handle G90
             if gcode.startswith('G90') and not is_gcode_done:
                 if response == 'ok':
                     is_gcode_done = True
 
+            # Handle G91
+            if gcode.startswith('G91') and not is_gcode_done:
+                if response == 'ok':
+                    is_gcode_done = True
+
             # Handle M112
             if gcode.startswith('M112') and not is_gcode_done:
-                if response.startswith('ok') or response == '{"!!":"!!"}':
-                    gcode = 'M999'
-                    delimited_gcode = self.get_delimited_gcode(gcode)
-                    yield from self.write_and_drain(delimited_gcode)
+                if response.startswith('ok'):
+                    is_gcode_done = True
 
-            # TODO: M999
+            # Handle M119
+            if gcode.startswith('M119') and not is_gcode_done:
+                try:
+                    json_result = json.loads(response)
+                    is_gcode_done = True
+                    logger.info('formatted data', json_result)
+                except ValueError:
+                    is_gcode_done = True
+
+            # Handle M199
+            if gcode.startswith('M199') and not is_gcode_done:
+                try:
+                    json_result = json.loads(response)
+                    is_gcode_done = True
+                    logger.info('formatted data',json_result)
+                except ValueError:
+                    is_gcode_done = True
+
+            # Handle M204
+            if gcode.startswith('M204') and not is_gcode_done:
+                try:
+                    #status, data = response.split(' ')
+                    json_result = json.loads(response)
+                    is_gcode_done = True
+                    logger.info('formatted data', json_result)
+                except ValueError:
+                    is_gcode_done = True
+
+            # Handle: M999
             if gcode.startswith('M999') and not is_gcode_done:
                 if response == 'ok':
                     is_gcode_done = True
@@ -115,7 +157,8 @@ class SmoothieCom(object):
             if response == '{"stat":0}':
                 break
 
-        yield from self.turn_off_feedback()
+        if not (gcode == 'M112'):
+            yield from self.turn_off_feedback()
 
         return json_result
 
@@ -129,17 +172,33 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def send_feedback_gcode(self, delimited_gcode, expected_response_msg):
+        
+        yield from self.write_and_drain(delimited_gcode)
 
-        self.writer.write(delimited_gcode.encode('utf-8'))
-        yield from self.writer.drain()
-
-        while True:
-            response = (yield from self._read())
-            if response == expected_response_msg:
-                yield from self._read() # Next message is an ok message
+        # while True needs an escape to avoid infinite loop(s) - how many times does this get called???
+        # counter used to prevent infinite loop, recorded in logger to see if this ever happens
+        # while True:
+        counter = 0
+        while counter < 10:
+            counter += 1
+            try:
+                response = (yield from self._read())
+            except:
+                logger.error('Error getting "response" - Breaking send_feedback_gcode loop')
                 break
+                raise
+            
+            if response == expected_response_msg:
+                try:
+                    yield from self._read() # Next message is an ok message
+                except:
+                    logger.error('Read error - Breaking send_feedback_gcode loop')
+                break
+                raise
             else:
                 yield from asyncio.sleep(0.001)
+            if counter == 10:
+                logger.warning('send_feedback_gcode looped 10 times')
 
     @asyncio.coroutine
     def _read(self):
@@ -147,7 +206,8 @@ class SmoothieCom(object):
             data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
             return data.decode().strip()
         except concurrent.futures.TimeoutError:
-            print('Timeout Error')
+            return None
+        except ConnectionResetError:
             return None
 
 
