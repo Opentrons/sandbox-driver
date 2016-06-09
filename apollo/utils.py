@@ -2,6 +2,8 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import queue
 import socket
+from unittest import mock
+
 
 
 def get_free_os_address():
@@ -27,3 +29,12 @@ def flush_queue(q):
         except queue.Empty:
             break
 
+
+def mock_coro_factory():
+    mock_obj = mock.Mock()
+
+    @asyncio.coroutine
+    def mocked_coro(*args, **kwargs):
+        mock_obj(*args, **kwargs)
+
+    return (mock_obj, mocked_coro)

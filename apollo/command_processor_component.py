@@ -30,6 +30,7 @@ class CommandProcessorComponent(wamp.ApplicationSession):
         if not control_queue:
             raise Exception('A control_queue must be set in self.config.extra')
 
+
         while True:
             cnt_msg = yield from utils.coro_queue_get(control_queue)
 
@@ -53,6 +54,10 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
             cmd_pkt = yield from utils.coro_queue_get(command_queue)
             pkt_id = cmd_pkt.get('id', 'ID NOT FOUND')
+
+            # Poison pill
+            if cmd_pkt is None:
+                break
 
             # TODO: execute roboto message and publish result
 
