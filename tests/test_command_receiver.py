@@ -14,16 +14,23 @@ from apollo import utils
 
 
 class CommandReceiverComponentTestCase(unittest.TestCase):
-    def test_enqueue_message(self):
-        qq = multiprocessing.Manager().Queue()
+    def test_message_queue_router(self):
+        cmd_q = multiprocessing.Manager().Queue()
+        cnt_q = multiprocessing.Manager().Queue()
 
-        msg_input = {'type': 'msg'}
-        message_queue_router(qq, msg_input)
+        pause_msg = {'type': 'pause'}
+        resume_msg = {'type': 'resume'}
+        data_msg = {'type': 'foo'}
+        erase_msg = {'type': 'erase'}
 
-        idx, msg_output = qq.get_nowait()
+        message_queue_router(cmd_q, cnt_q, data_msg)
+        message_queue_router(cmd_q, cnt_q, pause_msg)
+        message_queue_router(cmd_q, cnt_q, data_msg)
+        message_queue_router(cmd_q, cnt_q, resume_msg)
+        message_queue_router(cmd_q, cnt_q, erase_msg)
 
-        self.assertEqual(msg_input, msg_output)
-        self.assertTrue(isinstance(idx, str))
+        self.assertEqual(cmd_q.qsize(), 2)
+        self.assertEqual(cnt_q.qsize(), 3)
 
 
     def test_command_recv_subscribes_on_joining(self):

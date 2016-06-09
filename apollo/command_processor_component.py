@@ -32,32 +32,32 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
 
         while True:
-            cnt_msg = yield from utils.coro_queue_get(control_queue)
+            # Handle control packets if any exist
+            if control_queue.qsize() > 0:
+                cnt_msg = yield from utils.coro_queue_get(control_queue)
+                if cnt_msg == 'pause':
+                    while True:
+                        cnt_msg = yield from utils.coro_queue_get(control_queue)
+                        if cnt_msg == 'resume':
+                            break
+                        yield from asyncio.sleep(0.1)
+                elif cnt_msg == 'erase':
+                    utils.flush_queue(command_queue)
+                    continue
+                elif cnt_msg == 'resume':
+                    pass
+                else:
+                    logger.error('Received unknown control message: {}'.format(cnt_msg))
+                    break
 
-            if cnt_msg == 'pause':
-                while True:
-                    cnt_msg = yield from utils.coro_queue_get(control_queue)
-                    if cnt_msg == 'resume':
-                        break
-                    yield from asyncio.sleep(0.1)
-
-            elif cnt_msg == 'erase':
-                utils.flush_queue(command_queue)
-                continue
-
-            elif cnt_msg == 'resume':
-                pass
-
-            else:
-                logger.error('Received unknown control message: {}'.format(cnt_msg))
-                break
-
+            # Handle command packets (loop suspends execution if queue is empty)
             cmd_pkt = yield from utils.coro_queue_get(command_queue)
-            pkt_id = cmd_pkt.get('id', 'ID NOT FOUND')
 
-            # Poison pill
+            # Poison pill case.
             if cmd_pkt is None:
                 break
+
+            pkt_id = cmd_pkt.get('id', 'ID NOT FOUND')
 
             # TODO: execute roboto message and publish result
 

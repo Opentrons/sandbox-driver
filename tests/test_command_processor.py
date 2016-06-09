@@ -14,12 +14,17 @@ from apollo import utils
 
 class CommandProcessorComponentTestCase(unittest.TestCase):
 
-    def test_command_procc_publishes_on_joining(self):
+    def test_command_processor_publishes_on_joining(self):
         command_queue = multiprocessing.Manager().Queue()
+        control_queue = multiprocessing.Manager().Queue()
+
         command_queue.put_nowait({})
         command_queue.put_nowait(None)
 
-        config = ComponentConfig(extra={'command_queue': command_queue})
+        config = ComponentConfig(extra={
+            'command_queue': command_queue,
+            'control_queue': control_queue
+        })
         comp = CommandProcessorComponent(config)
         comp._transport = mock.Mock()
 
