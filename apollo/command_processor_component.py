@@ -25,12 +25,22 @@ class CommandProcessorComponent(wamp.ApplicationSession):
         if not command_queue:
             raise Exception('A command_queue must be set in self.config.extra')
 
+        # Consumes messages from queue; shutsdown if None is received
         while True:
-            id, msg = yield from utils.coro_queue_get(command_queue)
+            msg = yield from utils.coro_queue_get(command_queue)
+
+            # Poison pill
+            if msg is None:
+                break
 
             # TODO: execute roboto message and publish result
 
-            logger.debug('Dequeued Message ID: {} with {}'.format(id, msg))
+            logger.debug(
+                'Dequeued Message ID: {} with {}'.format(
+                    msg.get('ID', 'ID NOT FOUND'), msg
+                )
+            )
+
             self.publish(Config.ROBOT_TO_BROWSER_TOPIC, msg)
 
 
