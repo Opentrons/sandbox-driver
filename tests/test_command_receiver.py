@@ -6,7 +6,7 @@ from unittest import mock
 from autobahn.wamp.types import ComponentConfig
 
 from apollo.command_receiver_component import (
-    enqueue_message,
+    message_queue_router,
     CommandReceiverComponent
 )
 
@@ -18,7 +18,7 @@ class CommandReceiverComponentTestCase(unittest.TestCase):
         qq = multiprocessing.Manager().Queue()
 
         msg_input = {'type': 'msg'}
-        enqueue_message(qq, msg_input)
+        message_queue_router(qq, msg_input)
 
         idx, msg_output = qq.get_nowait()
 

@@ -11,7 +11,17 @@ from config.settings import Config
 logger = logging.getLogger('command-receiver-component')
 
 
-def enqueue_message(command_queue, control_queue, message):
+def message_queue_router(command_queue, control_queue, message):
+    """
+    :param command_queue: multiprocessing.Queue
+    :param control_queue: multiprocessing.Queue
+    :param message: dict
+    :return:
+
+    Given a message (dict), this method adds the given message to either the
+    command_queue or control_queue based on the type property of the message
+    """
+
     CONTROL_PACKET_TYPES = ['pause', 'resume', 'erase']
 
     pkt_type = message.get('type', {})
@@ -41,7 +51,7 @@ class CommandReceiverComponent(wamp.ApplicationSession):
         if not command_queue:
             raise Exception('A control_queue must be set in self.config.extra')
 
-        handle_message = partial(enqueue_message, command_queue, control_queue)
+        handle_message = partial(message_queue_router, command_queue, control_queue)
         yield from self.subscribe(handle_message, Config.BROWSER_TO_ROBOT_TOPIC)
 
 
