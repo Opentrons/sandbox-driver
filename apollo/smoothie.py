@@ -75,8 +75,7 @@ class SmoothieCom(object):
                 raise SmoothieMaxReadsException(gcode) 
 
             response = (yield from self._read())
-
-            logger.info('Smoothie response: {}'.format(response))
+            logger.info('Smoothie send response: {}'.format(response))
 
             # Handle M114 GCode
             if gcode == 'M114' and not is_gcode_done:
@@ -84,7 +83,7 @@ class SmoothieCom(object):
                     status, data = response.split(' ')
                     json_result = json.loads(data)
                     is_gcode_done = True
-                    logger.info('formatted data', json_result)
+                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
                     pass
 
@@ -126,18 +125,18 @@ class SmoothieCom(object):
                 try:
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data', json_result)
+                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
-                    is_gcode_done = True
+                    pass
 
             # Handle M199
             if gcode.startswith('M199') and not is_gcode_done:
                 try:
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data',json_result)
+                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
-                    is_gcode_done = True
+                    pass
 
             # Handle M204
             if gcode.startswith('M204') and not is_gcode_done:
@@ -145,9 +144,9 @@ class SmoothieCom(object):
                     #status, data = response.split(' ')
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data', json_result)
+                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
-                    is_gcode_done = True
+                    pass
 
             # Handle: M999
             if gcode.startswith('M999') and not is_gcode_done:
@@ -183,6 +182,7 @@ class SmoothieCom(object):
             counter += 1
             try:
                 response = (yield from self._read())
+                logger.info('Smoothie send_feedback_gcode response(1): {}'.format(response))
             except:
                 logger.error('Error getting "response" - Breaking send_feedback_gcode loop')
                 break
@@ -190,7 +190,8 @@ class SmoothieCom(object):
             
             if response == expected_response_msg:
                 try:
-                    yield from self._read() # Next message is an ok message
+                    test = (yield from self._read()) # Next message is an ok messagei
+                    logger.info('Smoothie send_feedback_gcode response(2): {}'.format(test))
                 except:
                     logger.error('Read error - Breaking send_feedback_gcode loop')
                 break

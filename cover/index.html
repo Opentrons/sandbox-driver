@@ -1,0 +1,365 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Coverage report</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.debounce.min.js"></script>
+    <script type="text/javascript" src="jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.index_ready);
+    </script>
+</head>
+<body class="indexfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage report:
+            <span class="pc_cov">3%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <form id="filter_container">
+            <input id="filter" type="text" value="" placeholder="filter..." />
+        </form>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">n</span>
+        <span class="key">s</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        
+        <span class="key">c</span> &nbsp; change column sorting
+    </p>
+    </div>
+</div>
+
+<div id="index">
+    <table class="index">
+        <thead>
+            
+            <tr class="tablehead" title="Click to sort">
+                <th class="name left headerSortDown shortkey_n">Module</th>
+                <th class="shortkey_s">statements</th>
+                <th class="shortkey_m">missing</th>
+                <th class="shortkey_x">excluded</th>
+                
+                <th class="right shortkey_c">coverage</th>
+            </tr>
+        </thead>
+        
+        <tfoot>
+            <tr class="total">
+                <td class="name left">Total</td>
+                <td>6226</td>
+                <td>6065</td>
+                <td>13</td>
+                
+                <td class="right" data-ratio="161 6226">3%</td>
+            </tr>
+        </tfoot>
+        <tbody>
+            
+            <tr class="file">
+                <td class="name left"><a href="apollo_py.html">apollo.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="apollo_smoothie_py.html">apollo/smoothie.py</a></td>
+                <td>157</td>
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="137 157">87%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="apollo_utils_py.html">apollo/utils.py</a></td>
+                <td>24</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="24 24">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_py.html">asyncio.py</a></td>
+                <td>23</td>
+                <td>23</td>
+                <td>4</td>
+                
+                <td class="right" data-ratio="0 23">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_base_events_py.html">asyncio/base_events.py</a></td>
+                <td>732</td>
+                <td>732</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 732">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_base_subprocess_py.html">asyncio/base_subprocess.py</a></td>
+                <td>192</td>
+                <td>192</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 192">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_compat_py.html">asyncio/compat.py</a></td>
+                <td>7</td>
+                <td>7</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 7">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_constants_py.html">asyncio/constants.py</a></td>
+                <td>2</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 2">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_coroutines_py.html">asyncio/coroutines.py</a></td>
+                <td>184</td>
+                <td>184</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 184">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_events_py.html">asyncio/events.py</a></td>
+                <td>279</td>
+                <td>279</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 279">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_futures_py.html">asyncio/futures.py</a></td>
+                <td>226</td>
+                <td>226</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 226">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_locks_py.html">asyncio/locks.py</a></td>
+                <td>195</td>
+                <td>195</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 195">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_log_py.html">asyncio/log.py</a></td>
+                <td>2</td>
+                <td>2</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 2">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_protocols_py.html">asyncio/protocols.py</a></td>
+                <td>16</td>
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 16">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_queues_py.html">asyncio/queues.py</a></td>
+                <td>124</td>
+                <td>124</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 124">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_selector_events_py.html">asyncio/selector_events.py</a></td>
+                <td>714</td>
+                <td>714</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="0 714">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_sslproto_py.html">asyncio/sslproto.py</a></td>
+                <td>338</td>
+                <td>338</td>
+                <td>2</td>
+                
+                <td class="right" data-ratio="0 338">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_streams_py.html">asyncio/streams.py</a></td>
+                <td>300</td>
+                <td>300</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 300">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_subprocess_py.html">asyncio/subprocess.py</a></td>
+                <td>145</td>
+                <td>145</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 145">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_tasks_py.html">asyncio/tasks.py</a></td>
+                <td>373</td>
+                <td>373</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 373">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_transports_py.html">asyncio/transports.py</a></td>
+                <td>95</td>
+                <td>95</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 95">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="asyncio_unix_events_py.html">asyncio/unix_events.py</a></td>
+                <td>577</td>
+                <td>577</td>
+                <td>5</td>
+                
+                <td class="right" data-ratio="0 577">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="concurrent_py.html">concurrent.py</a></td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 0">100%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="concurrent_futures_py.html">concurrent/futures.py</a></td>
+                <td>5</td>
+                <td>5</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 5">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="concurrent_futures__base_py.html">concurrent/futures/_base.py</a></td>
+                <td>275</td>
+                <td>275</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 275">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="concurrent_futures_process_py.html">concurrent/futures/process.py</a></td>
+                <td>231</td>
+                <td>231</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 231">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="concurrent_futures_thread_py.html">concurrent/futures/thread.py</a></td>
+                <td>85</td>
+                <td>85</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 85">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="multiprocessing_connection_py.html">multiprocessing/connection.py</a></td>
+                <td>592</td>
+                <td>592</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 592">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="multiprocessing_reduction_py.html">multiprocessing/reduction.py</a></td>
+                <td>137</td>
+                <td>137</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 137">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="multiprocessing_util_py.html">multiprocessing/util.py</a></td>
+                <td>196</td>
+                <td>196</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 196">0%</td>
+            </tr>
+            
+        </tbody>
+    </table>
+
+    <p id="no_rows">
+        No items found using the specified filter.
+    </p>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="https://coverage.readthedocs.org">coverage.py v4.0.3</a>,
+            created at 2016-06-10 10:22
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
