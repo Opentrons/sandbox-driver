@@ -3,6 +3,8 @@ import logging
 import json
 import concurrent
 
+from config.settings import Config
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -32,9 +34,7 @@ class SmoothieCom(object):
         return (yield from self.smoothie_handshake())
 
     def get_delimited_gcode(self, gcode):
-        """
-        # Add delimiter to gcode for Smoothie board
-        """
+        """ Add delimiter to gcode for Smoothie board """
         return gcode.strip() + '\r\n'
 
     @asyncio.coroutine
@@ -67,12 +67,12 @@ class SmoothieCom(object):
         is_gcode_done = False
         json_result = None
 
-        counter = 0
+        read_attempts = 0
         while not is_gcode_done:
-            counter += 1
-            if counter > 9:
-                break
+            read_attempts += 1
+            if read_attempts > Config.MAX_SEND_READS:
                 raise SmoothieMaxReadsException(gcode) 
+                break
 
             response = (yield from self._read())
             logger.info('Smoothie send response: {}'.format(response))
@@ -174,12 +174,9 @@ class SmoothieCom(object):
         
         yield from self.write_and_drain(delimited_gcode)
 
-        # while True needs an escape to avoid infinite loop(s) - how many times does this get called???
-        # counter used to prevent infinite loop, recorded in logger to see if this ever happens
-        # while True:
-        counter = 0
-        while counter < 10:
-            counter += 1
+        read_attempts = 0
+        while read_attempts < Config.MAX_FEEDBACK_READS:
+            read_attempts += 1
             try:
                 response = (yield from self._read())
                 logger.info('Smoothie send_feedback_gcode response(1): {}'.format(response))
