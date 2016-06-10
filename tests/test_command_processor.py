@@ -9,8 +9,6 @@ from apollo.command_processor_component import (
     CommandProcessorComponent
 )
 
-from apollo import utils
-
 
 class CommandProcessorComponentTestCase(unittest.TestCase):
 
