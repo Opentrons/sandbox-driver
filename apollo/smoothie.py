@@ -215,7 +215,7 @@ class SmoothieCom(object):
                 break
             else:
                 yield from asyncio.sleep(0.001)
-            if counter == Config.MAX_FEEDBACK_READS:
+            if read_attempts == Config.MAX_FEEDBACK_READS:
                 logger.warning('MAX_FEEDBACK_READS reached: {} read attempts'.format(read_attempts))
 
     @asyncio.coroutine
