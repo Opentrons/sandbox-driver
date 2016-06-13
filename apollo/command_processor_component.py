@@ -7,6 +7,7 @@ import multiprocessing
 from autobahn.asyncio import wamp
 
 from apollo import utils
+from apollo.command_to_gcode import CommandToGCode
 from config.settings import Config
 
 
@@ -44,6 +45,8 @@ class CommandProcessorComponent(wamp.ApplicationSession):
 
         command_queue = self.config.extra.get('command_queue')
         control_queue = self.config.extra.get('control_queue')
+
+        msg_handler = CommandToGCode()
 
         if not command_queue:
             raise Exception('A command_queue must be set in self.config.extra')
@@ -86,6 +89,7 @@ class CommandProcessorComponent(wamp.ApplicationSession):
             pkt_id = cmd_pkt.get('id', 'NA')
 
             # TODO: execute robo message and publish result
+            yield from msg_handler.process(cmd_pkt)
 
             logger.debug('Dequeued Message ID: {} with {}'.format(pkt_id, cmd_pkt))
             self.publish(Config.ROBOT_TO_BROWSER_TOPIC, cmd_pkt)
