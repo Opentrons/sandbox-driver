@@ -65,6 +65,15 @@ class SmoothieCom(object):
 
     @asyncio.coroutine
     def send(self, gcode, response_handler=None):
+        """ Send Gcode
+            
+            Send Gcode as a string. Send will return with a response list. 
+            In most cases the list will be empty. A line ending ('\r\n') will
+            be added automatically. Set response_handler to a coroutine
+            accepting a string description as the first argument and the message
+            back as the second argument if you want it to handle responses 
+            from the SmoothieBoard.
+        """
         # Skip if command is EMERGENCY STOP or RESET FROM HALT
         if not (gcode == 'M112' or gcode == 'M999'):
             yield from self.turn_on_feedback()
