@@ -83,7 +83,6 @@ class SmoothieCom(object):
                     status, data = response.split(' ')
                     json_result = json.loads(data)
                     is_gcode_done = True
-                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
                     pass
 
@@ -125,7 +124,6 @@ class SmoothieCom(object):
                 try:
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
                     pass
 
@@ -134,7 +132,6 @@ class SmoothieCom(object):
                 try:
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
                     pass
 
@@ -144,7 +141,6 @@ class SmoothieCom(object):
                     #status, data = response.split(' ')
                     json_result = json.loads(response)
                     is_gcode_done = True
-                    logger.info('formatted data'.format(str(json_result)))
                 except ValueError:
                     pass
 
@@ -182,21 +178,23 @@ class SmoothieCom(object):
                 logger.info('Smoothie send_feedback_gcode response(1): {}'.format(response))
             except:
                 logger.error('Error getting "response" - Breaking send_feedback_gcode loop')
-                break
                 raise
+                break
             
             if response == expected_response_msg:
                 try:
                     test = (yield from self._read()) # Next message is an ok messagei
                     logger.info('Smoothie send_feedback_gcode response(2): {}'.format(test))
                 except:
-                    logger.error('Read error - Breaking send_feedback_gcode loop')
-                break
+                    raise
+                    break
+            elif response == '{"!!":!!}' or response == '!!:!!':
                 raise
+                break
             else:
                 yield from asyncio.sleep(0.001)
-            if counter == 10:
-                logger.warning('send_feedback_gcode looped 10 times')
+            if counter == Config.MAX_FEEDBACK_READS:
+                logger.warning('MAX_FEEDBACK_READS reached: {} read attempts'.format(read_attempts))
 
     @asyncio.coroutine
     def _read(self):
