@@ -13,6 +13,18 @@ class SmoothieMaxReadsException(Exception):
         self.gcode = gcode
 
 class SmoothieCom(object):
+    """ Class for communication with a Smoothieboard
+    
+        - Instantiate a SmoothieCom object with a host, port, and optionally, an event loop.
+        
+        - Ser2net, or a web server, should be running for the SmoothieCom to connect to at
+          the given host and port address.
+        
+        - Call connect to open a connection.
+        
+        - Once a connection is established, call send with an optional response_handler for 
+          handling responses to the sent command.
+    """
     def __init__(self, host, port, loop=None):
         self.host = host
         self.port = port
@@ -26,7 +38,7 @@ class SmoothieCom(object):
                 loop=self.loop
             )
         except OSError as e:
-            logger.error("Did not connect")
+            logger.error("Failed to connect to Smoothieboard")
             raise e
 
         self.reader = reader
@@ -188,6 +200,7 @@ class SmoothieCom(object):
                 except:
                     raise
                     break
+            # Handle HALT STATE response
             elif response == '{"!!":!!}' or response == '!!:!!':
                 raise
                 break
@@ -207,6 +220,7 @@ class SmoothieCom(object):
             return None
 
 
+# REPL app for quick testing
 @asyncio.coroutine
 def repl(smc):
     while True:
