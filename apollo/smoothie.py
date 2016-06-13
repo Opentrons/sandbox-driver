@@ -201,7 +201,7 @@ class SmoothieCom(object):
                     raise
                     break
             # Handle HALT STATE response
-            elif response == '{"!!":!!}' or response == '!!:!!':
+            elif response == '{"!!":"!!"}':
                 raise
                 break
             else:
