@@ -13,6 +13,15 @@ class CommandToGCode(object):
     def __init__(self):
         self.smoothie_com = SmoothieCom(Config.SMOOTHIE_URL, Config.SMOOTHIE_PORT)
 
+        self.COMMAND_TYPE_TO_HANDLER = {
+            'move': self.move,
+            'position': self.position,
+            'hardstop': self.hardstop,
+            'home': self.home,
+            'acceleration': self.acceleration,
+            'speed': self.speed
+        }
+
     @asyncio.coroutine
     def connect(self):
         """
@@ -22,12 +31,12 @@ class CommandToGCode(object):
         return (yield from self.smoothie_com.connect())
 
     @asyncio.coroutine
-    def send_gcode(self,string):
+    def send_gcode(self, gcode : str):
         """
         send a GCode string to the smoothie module
         """
-        if len(string):
-            return (yield from self.smoothie_com.send(string))
+        if gcode:
+            return (yield from self.smoothie_com.send(gcode))
 
     @asyncio.coroutine
     def process(self, command):
@@ -37,16 +46,26 @@ class CommandToGCode(object):
         """
 
         # check to see if this module has a method matching the command's 'type'
-        method = getattr(self, command.get('type', '') , None)
+        command_type = command.get('type', '')
 
-        if method:
+        command_data = command.get('data',{})
+
+        gcode_list = None
+
+        try:
+            handler = self.COMMAND_TYPE_TO_HANDLER[command_type]
+            gcode_list = handler(command_data)
+        except KeyError:
+            log.error('invalid command: {}'.format(command_type))
+
+        if gcode_list:
 
             coords = None
 
             # pass the data to the matching method, returning an array of gcode strings
-            for line in method( command.get('data',{}) ):
+            for gcode_string in gcode_list:
 
-                ret = yield from self.send_gcode(line)
+                ret = yield from self.send_gcode(gcode_string)
 
                 if ret != None:
                     coords = self.parse_coordinates(ret)
