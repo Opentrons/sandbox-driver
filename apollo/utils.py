@@ -1,5 +1,9 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import socket
+from unittest import mock
+
+
 
 def get_free_os_address():
     sock = socket.socket()
@@ -7,7 +11,6 @@ def get_free_os_address():
     address = sock.getsockname()
     sock.close()
     return address
-
 
 class Reader(object):
     def __init__(self, read_sequence):
@@ -32,3 +35,19 @@ class Writer(object):
         for item in self.write_buffer:
             self.drain_buffer.append(item)
         self.write_buffer = []
+
+
+@asyncio.coroutine
+def coro_queue_get(queue, loop=None):
+    loop = loop or asyncio.get_event_loop()
+    return (yield from loop.run_in_executor(ThreadPoolExecutor(1), queue.get))
+
+
+def mock_coro_factory():
+    mock_obj = mock.Mock()
+
+    @asyncio.coroutine
+    def mocked_coro(*args, **kwargs):
+        mock_obj(*args, **kwargs)
+
+    return (mock_obj, mocked_coro)
