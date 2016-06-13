@@ -82,7 +82,7 @@ class SmoothieCom(object):
 
         yield from self.write_and_drain(delimited_gcode)
 
-        if response_handler and asyncio.iscoroutine(response_handler):
+        if response_handler and asyncio.iscoroutinefunction(response_handler):
             yield from response_handler('start', gcode)
 
         is_gcode_done = False
@@ -98,6 +98,14 @@ class SmoothieCom(object):
             response = (yield from self._read())
             logger.info('Smoothie send response: {}'.format(response))
 
+            if response is None:
+                logger.warning('response is None')
+                break
+
+            if response == '{"!!":"!!"}':
+                logger.info('HALT STATE, call M999')
+                break
+
             # Handle M114 GCode
             if gcode == 'M114' and not is_gcode_done:
                 try:
@@ -109,7 +117,7 @@ class SmoothieCom(object):
 
             # Handle G0 GCode
             if gcode.startswith('G0') and not is_gcode_done:
-                if response_handler and asyncio.iscoroutine(response_handler):
+                if response_handler and asyncio.iscoroutinefunction(response_handler):
                     yield from response_handler('gcode progress', response)
 
                 if response == '{"stat":0}':
@@ -208,10 +216,11 @@ class SmoothieCom(object):
                     logger.info('Smoothie send_feedback_gcode response(2): {}'.format(test))
                 except:
                     raise
-                    break
+                # break at this level because it is also for response == expected_response_msg
+                break
             # Handle HALT STATE response
             elif response == '{"!!":"!!"}':
-                raise
+                logger.warning('HALT STATE, call M999')
                 break
             else:
                 yield from asyncio.sleep(0.001)
@@ -231,10 +240,15 @@ class SmoothieCom(object):
 
 # REPL app for quick testing
 @asyncio.coroutine
+def test_response_handler(description, message):
+    print(' description => {}'.format(description))
+    print(' message     => {}'.format(message))
+
+@asyncio.coroutine
 def repl(smc):
     while True:
         req = input('>>> ').strip()
-        res = yield from smc.send(req, None)
+        res = yield from smc.send(req, test_response_handler)
         print('res:', res)
 
 if __name__ == '__main__':
