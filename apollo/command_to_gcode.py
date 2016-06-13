@@ -1,7 +1,11 @@
 import asyncio
+import logging
 
 from apollo.smoothie import SmoothieCom
 from config.settings import Config
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
 
 class CommandToGCode(object): 
@@ -44,11 +48,8 @@ class CommandToGCode(object):
         receive front-end commands, and convert them to GCode
         returns None or a coordinate dict
         """
-
-        # check to see if this module has a method matching the command's 'type'
         command_type = command.get('type', '')
-
-        command_data = command.get('data',{})
+        command_data = command.get('data', {})
 
         gcode_list = None
 
@@ -56,7 +57,7 @@ class CommandToGCode(object):
             handler = self.COMMAND_TYPE_TO_HANDLER[command_type]
             gcode_list = handler(command_data)
         except KeyError:
-            log.error('invalid command: {}'.format(command_type))
+            logger.error('invalid command: {}'.format(command_type))
 
         if gcode_list:
 
@@ -72,23 +73,23 @@ class CommandToGCode(object):
 
             return coords
 
-    def parse_coordinates(self,coords):
+    def parse_coordinates(self, coords):
         """
         removes unnecessary data from the coordinates object returned from smoothie-com
         returns a dict
         """
 
-        if type(coords) is dict:
+        if isinstance(coords, dict):
 
             new_coords = {}
 
             for axis, label in Config.GCODE_KEYS['position'].items():
-                if coords.get(label,None) != None:
+                if coords.get(label, None) != None:
                     new_coords[axis] = coords[label]
 
             return new_coords
 
-    def create_gcode_string(self,data,type):
+    def create_gcode_string(self, data, type):
         """
         turns a front-end command dict into the equivalent gcode string
         returns a string
@@ -96,8 +97,8 @@ class CommandToGCode(object):
 
         temp_string = ''
 
-        for axis in Config.GCODE_AXIS.get(type,[]):
-            if data.get(axis,None):
+        for axis in Config.GCODE_AXIS.get(type, []):
+            if data.get(axis, None):
                 temp_key = Config.GCODE_KEYS[type][axis]
                 temp_string += ' {0}{1}'.format( temp_key , data[axis] )
 
@@ -107,44 +108,44 @@ class CommandToGCode(object):
         else:
             return ''
 
-    def move(self,data):
+    def move(self, data):
         """
         create absolute or relative movement gcode
         returns array of strings
         """
 
-        mode = Config.GCODE_COMMANDS['move_rel'] if data.get('relative',False) else Config.GCODE_COMMANDS['move_abs']
+        mode = Config.GCODE_COMMANDS['move_rel'] if data.get('relative', False) else Config.GCODE_COMMANDS['move_abs']
 
-        return [ mode , self.create_gcode_string(data,'move') ]
+        return [ mode , self.create_gcode_string(data, 'move') ]
 
-    def position(self,data):
+    def position(self, data):
         """
         GET or SET the current axis positions
         returns array of strings
         """
 
-        if data and type(data) is dict and len(data.keys()):
-            return [ self.create_gcode_string(data,'position') ]
+        if data and isinstance(data, dict) and len(data.keys()):
+            return [ self.create_gcode_string(data, 'position') ]
         else:
             return [ Config.GCODE_COMMANDS['position_get'] ]
 
-    def speed(self,data):
+    def speed(self, data):
         """
         create 'speed' gcode
         returns array of strings
         """
 
-        return [ self.create_gcode_string(data,'speed') ]
+        return [ self.create_gcode_string(data, 'speed') ]
 
-    def acceleration(self,data):
+    def acceleration(self, data):
         """
         create 'acceleration' gcode
         returns array of strings
         """
 
-        return [ self.create_gcode_string(data,'acceleration') ]
+        return [ self.create_gcode_string(data, 'acceleration') ]
 
-    def home(self,data):
+    def home(self, data):
         """
         create 'home' gcode: if no axis are specified, all axis are homed at once
         returns array of strings
@@ -156,7 +157,7 @@ class CommandToGCode(object):
 
         return [ temp_string ]
 
-    def hardstop(self,data):
+    def hardstop(self, data):
         """
         create 'hardstop' gcode: halt the motor driver, then reset it
         returns array of strings
