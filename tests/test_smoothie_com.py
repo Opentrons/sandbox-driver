@@ -21,7 +21,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M114(self):
         """ TEST SENDING M114 """
-        print('\n\n','='*20,'TESTING M114','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -44,7 +43,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_G0(self):
         """ TEST SENDING G0 """
-        print('\n\n','='*20,'TESTING G0','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -65,7 +63,6 @@ class SmoothieComTest(unittest.TestCase):
         
     def test_send_G28(self):
         """ TEST SENDING G28 """
-        print('\n\n','='*20,'TESTING G28','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -86,7 +83,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_G90(self):
         """ TEST SENDING G90 """
-        print('\n\n','='*20,'TESTING G90','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -107,7 +103,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_G91(self):
         """ TEST SENDING G91 """
-        print('\n\n','='*20,'TESTING G91','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -128,7 +123,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_G92(self):
         """ TEST SENDING G92 """
-        print('\n\n','='*20,'TESTING G92','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -149,7 +143,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M112(self):
         """ TEST SENDING M112 """
-        print('\n\n','='*20,'TESTING M112','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -171,7 +164,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M119(self):
         """ TEST SENDING M119 """
-        print('\n\n','='*20,'TESTING M119','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -192,7 +184,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M199(self):
         """ TEST SENDING M199 """
-        print('\n\n','='*20,'TESTING M199','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -213,7 +204,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M204(self):
         """ TEST SENDING M204 """
-        print('\n\n','='*20,'TESTING M204','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
@@ -234,7 +224,6 @@ class SmoothieComTest(unittest.TestCase):
 
     def test_send_M999(self):
         """ TEST SENDING M999 """
-        print('\n\n','='*20,'TESTING M999','-'*20,'\n')
         smoothie_read_sequence = [
             'feedback engaged',
             'ok',
