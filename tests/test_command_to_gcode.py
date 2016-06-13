@@ -6,7 +6,6 @@ from apollo.command_to_gcode import CommandToGCode
 
 class CommandToGCodeTestCase(unittest.TestCase):
 
-
     def setUp(self):
 
         self.send_mock = mock.Mock()
@@ -26,7 +25,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.com2gcode.smoothie_com.send = mMock
 
-
     def test_bad_command_type(self):
         """
         test to see that it can handle a bad command type
@@ -36,7 +34,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
             'type': 'stop',
             'data' : None
         }))
-
 
     def test_move_rel_command(self):
         """
@@ -65,7 +62,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
 
-
     def test_move_abs_command(self):
         """
         Testing the 'move' command for absolute coordinates
@@ -92,7 +88,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
 
-
     def test_position_get_command(self):
         """
         Testing the 'position' command for getting the current axis values
@@ -116,7 +111,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
-
 
     def test_position_set_command(self):
         """
@@ -143,7 +137,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
 
-
     def test_speed_command(self):
         """
         Testing the 'speed' command
@@ -168,7 +161,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
-
 
     def test_acceleration_command(self):
         """
@@ -206,7 +198,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
-
 
     def test_home_command(self):
         """
@@ -254,7 +245,6 @@ class CommandToGCodeTestCase(unittest.TestCase):
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
 
-
     def test_hardstop_command(self):
         """
         Testing the 'hardstop' command
@@ -273,16 +263,3 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
-
-
-
-
-
-
-
-
-
-
-
-
-
