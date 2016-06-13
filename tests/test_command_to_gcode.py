@@ -11,7 +11,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         self.send_mock = mock.Mock()
 
-        self.coords = {'X':0,'Y':0,'Z':0,'A':0,'B':0,'x':0,'y':0,'z':0,'a':0,'b':0}
+        self.coords = {'X':0, 'Y':0, 'Z':0, 'A':0, 'B':0, 'x':0, 'y':0, 'z':0, 'a':0, 'b':0}
 
         @asyncio.coroutine
         def mMock(m):
@@ -33,7 +33,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         """
 
         self.loop.run_until_complete(self.com2gcode.process({
-            'type':'stop',
+            'type': 'stop',
             'data' : None
         }))
 
@@ -104,7 +104,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
                 'type':'position',
                 'data': None
             })
-            self.assertEquals({'x':0,'y':0,'z':0,'a':0,'b':0}, returned_value)
+            self.assertEquals({'x':0, 'y':0, 'z':0, 'a':0, 'b':0}, returned_value)
 
         self.loop.run_until_complete(change_position())
 
@@ -218,7 +218,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         # test ALL axis
         self.loop.run_until_complete(self.com2gcode.process({
             'type':'home',
-            'data': ['x','y','z','a','b']
+            'data': ['x', 'y', 'z', 'a', 'b']
         }))
 
         result = self.send_mock.call_args_list
@@ -231,7 +231,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         # test a few of the axis
         self.loop.run_until_complete(self.com2gcode.process({
             'type':'home',
-            'data': ['x','b']
+            'data': ['x', 'b']
         }))
 
         result = self.send_mock.call_args_list
