@@ -212,8 +212,8 @@ class SmoothieCom(object):
             
             if response == expected_response_msg:
                 try:
-                    test = (yield from self._read()) # Next message is an ok messagei
-                    logger.info('Smoothie send_feedback_gcode response(2): {}'.format(test))
+                    followup_response = (yield from self._read()) # Next message is an ok messagei
+                    logger.info('Smoothie send_feedback_gcode response(2): {}'.format(followup_response))
                 except:
                     raise
                 # break at this level because it is also for response == expected_response_msg
@@ -233,9 +233,11 @@ class SmoothieCom(object):
             data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
             return data.decode().strip()
         except concurrent.futures.TimeoutError:
-            return None
+            logger.error('concurrent.futures.TimeoutError in _read')
+            raise
         except ConnectionResetError:
-            return None
+            logger.error('ConnectionResetError in _read')
+            raise
 
 
 # REPL app for quick testing
