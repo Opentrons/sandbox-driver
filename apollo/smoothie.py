@@ -74,6 +74,10 @@ class SmoothieCom(object):
             back as the second argument if you want it to handle responses 
             from the SmoothieBoard.
         """
+        if not isinstance(gcode, str):
+            logger.error('Gcode must be string')
+            raise TypeError('Gcode must be string')
+            return None
         # Skip if command is EMERGENCY STOP or RESET FROM HALT
         if not (gcode == 'M112' or gcode == 'M999'):
             yield from self.turn_on_feedback()
