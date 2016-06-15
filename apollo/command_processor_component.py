@@ -8,7 +8,7 @@ from autobahn.asyncio import wamp
 
 from apollo import utils
 from apollo.command_to_gcode import CommandToGCode
-from config.settings import Config
+from apollo.config.settings import Config
 
 
 logger = logging.getLogger()

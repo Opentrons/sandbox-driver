@@ -1,12 +1,13 @@
 import asyncio
 from functools import partial
+import json
 import logging
 import multiprocessing
-import uuid
 
 from autobahn.asyncio import wamp
 
-from config.settings import Config
+from apollo.config.settings import Config
+
 
 logger = logging.getLogger('command-receiver-component')
 
@@ -23,6 +24,9 @@ def message_queue_router(command_queue, control_queue, message):
     """
 
     CONTROL_PACKET_TYPES = ['pause', 'resume', 'erase']
+
+    if message and isinstance(message, str):
+        message = json.loads(message)
 
     pkt_type = message.get('type', {})
     pkt_id = message.get('id', 'ID NOT FOUND')

@@ -2,7 +2,8 @@ import asyncio
 import logging
 
 from apollo.smoothie import SmoothieCom
-from config.settings import Config
+from apollo.config.settings import Config
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()

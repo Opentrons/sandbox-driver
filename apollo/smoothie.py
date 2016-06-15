@@ -3,7 +3,8 @@ import logging
 import json
 import concurrent
 
-from config.settings import Config
+from apollo.config.settings import Config
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
