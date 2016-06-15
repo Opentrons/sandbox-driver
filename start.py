@@ -1,9 +1,13 @@
-##!/usr/bin/env python3
+#!/usr/bin/env python3
 
+import asyncio
 import multiprocessing
 
-from apollo.command_receiver_component import CommandReceiverComponent
+from autobahn.asyncio import wamp
+
+from apollo.config.settings import Config
 from apollo.command_processor_component import CommandProcessorComponent
+from apollo.command_receiver_component import CommandReceiverComponent
 
 
 def start_command_processor(command_queue, control_queue, url, realm, loop=None):
