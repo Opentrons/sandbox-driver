@@ -1,7 +1,10 @@
+#!/user/bin/env python3
+
 import asyncio
 import logging
 import json
 import concurrent
+import pyserial_asyncio
 
 from config.settings import Config
 
@@ -12,35 +15,36 @@ class SmoothieMaxReadsException(Exception):
     def __init__(self, gcode=None):
         self.gcode = gcode
 
+
 class SmoothieCom(object):
     """ Class for communication with a Smoothieboard
     
-        - Instantiate a SmoothieCom object with a host, port, and optionally, an event loop.
+        - Instantiate a SmoothieCom object with a device and optionally an event loop.
         
-        - Ser2net, or a web server, should be running for the SmoothieCom to connect to at
-          the given host and port address.
+        - Call/Schedule connect to open a connection.
         
-        - Call connect to open a connection.
-        
-        - Once a connection is established, call send with an optional response_handler for 
-          handling responses to the sent command.
-    """
-    def __init__(self, host, port, loop=None):
-        self.host = host
-        self.port = port
-        self.loop = loop or asyncio.get_event_loop()
+        - Once a connection is established, call/schedule send with an optional response_handler for 
+          handling responses as the command executes.
 
+        - Call halt() for an emergency Halt and send('M999') to Reset from Halt
+    """
+    def __init__(self, device, loop=None):
+        self.device = device
+        self.loop = loop or asyncio.get_event_loop()
+        self._halt_state = 0 # 0 = Not Halted, 1 = To Be Halted, 2 = Halted
+
+    @asyncio.coroutine
     def connect(self):
+        """ Connect to Smoothie """
         try:
-            reader, writer = yield from asyncio.open_connection(
-                host=self.host,
-                port=self.port,
-                loop=self.loop
+            reader, writer = yield from serial_asyncio.open_serial_connection(
+                self.device,
+                loop=self.loop,
+                baudrate=115200
             )
         except OSError as e:
             logger.error("Failed to connect to Smoothieboard")
             raise e
-
         self.reader = reader
         self.writer = writer
         return (yield from self.smoothie_handshake())
@@ -48,6 +52,23 @@ class SmoothieCom(object):
     def get_delimited_gcode(self, gcode):
         """ Add delimiter to gcode for Smoothie board """
         return gcode.strip() + '\r\n'
+
+    def halt(self):
+        """ Emergency halt """
+        self.halt_state = 1
+
+    def check_halt_state(self, gcode=''):
+        """ Check halt state """
+        if self.halt_state == 1:
+            logger.info('Halting... sending M112')
+            self.halt_state = 2
+            self.writer.write('M112'.encode('utf-8'))
+            yield from self.writer.drain()
+            return true
+        elif self.halt_state == 2 and gcode != 'M999':
+            logger.info('Halted')
+            return true
+        return false
 
     @asyncio.coroutine
     def smoothie_handshake(self):
@@ -58,6 +79,8 @@ class SmoothieCom(object):
     @asyncio.coroutine
     def write_and_drain(self, message):
         try:
+            if check_halt_state(message):
+                return
             self.writer.write(message.encode('utf-8'))
             yield from self.writer.drain()
         except Exception as exc:
@@ -81,6 +104,10 @@ class SmoothieCom(object):
         # Skip if command is EMERGENCY STOP or RESET FROM HALT
         if not (gcode == 'M112' or gcode == 'M999'):
             yield from self.turn_on_feedback()
+
+        if gcode == 'M999':
+            self.halt_state = 0
+            logger.info('Resetting from Halt')
 
         delimited_gcode = self.get_delimited_gcode(gcode)
 
@@ -234,6 +261,8 @@ class SmoothieCom(object):
     @asyncio.coroutine
     def _read(self):
         try:
+            if check_halt_state():
+                return
             data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
             return data.decode().strip()
         except concurrent.futures.TimeoutError:
@@ -258,7 +287,7 @@ def repl(smc):
         print('res:', res)
 
 if __name__ == '__main__':
-    smc = SmoothieCom('localhost', 3335)
+    smc = SmoothieCom('/dev/tty.usbmodem1421')
     loop = asyncio.get_event_loop()
     res = loop.run_until_complete(smc.connect())
     if res:
