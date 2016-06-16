@@ -4,7 +4,7 @@ import asyncio
 import logging
 import json
 import concurrent
-import pyserial_asyncio
+import serial_asyncio
 
 from config.settings import Config
 
@@ -38,9 +38,9 @@ class SmoothieCom(object):
         """ Connect to Smoothie """
         try:
             reader, writer = yield from serial_asyncio.open_serial_connection(
-                self.device,
-                loop=self.loop,
-                baudrate=115200
+                #self.device,
+                baudrate=115200#,
+                #loop=self.loop
             )
         except OSError as e:
             logger.error("Failed to connect to Smoothieboard")
