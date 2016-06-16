@@ -23,7 +23,8 @@ class CommandToGCode(object):
             'hardstop': self.hardstop,
             'home': self.home,
             'acceleration': self.acceleration,
-            'speed': self.speed
+            'speed': self.speed,
+            'switches': self.switches
         }
 
     @asyncio.coroutine
@@ -135,7 +136,10 @@ class CommandToGCode(object):
         returns array of strings
         """
 
-        return [ self.create_gcode_string(data, 'speed') ]
+        if data and isinstance(data, dict) and len(data.keys()):
+            return [ self.create_gcode_string(data, 'speed') ]
+        else:
+            return [ Config.GCODE_COMMANDS['speed_get'] ]
 
     def acceleration(self, data):
         """
@@ -143,7 +147,18 @@ class CommandToGCode(object):
         returns array of strings
         """
 
-        return [ self.create_gcode_string(data, 'acceleration') ]
+        if data and isinstance(data, dict) and len(data.keys()):
+            return [ self.create_gcode_string(data, 'acceleration') ]
+        else:
+            return [ Config.GCODE_COMMANDS['acceleration'] ]
+
+    def switches(self, data):
+        """
+        create 'get_endstops' gcode to get the state of the homing switches
+        returns array of strings
+        """
+
+        return [ Config.GCODE_COMMANDS['switches'] ]
 
     def home(self, data):
         """

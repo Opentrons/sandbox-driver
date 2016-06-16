@@ -4,6 +4,10 @@ import asyncio
 
 from apollo.command_to_gcode import CommandToGCode
 
+"""
+clear; nosetests --with-coverage --rednose --nocapture --cover-package=apollo --cover-html
+"""
+
 class CommandToGCodeTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -142,6 +146,7 @@ class CommandToGCodeTestCase(unittest.TestCase):
         Testing the 'speed' command
         """
 
+        # test SETting the speed
         self.loop.run_until_complete(self.com2gcode.process({
             'type':'speed',
             'data': {
@@ -157,6 +162,21 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         expected = [
             mock.call('G0 F3000 a400 b500'),
+        ]
+
+        self.assertEquals(expected, result)
+        self.send_mock.reset_mock()
+
+        # test GETting the speed
+        self.loop.run_until_complete(self.com2gcode.process({
+            'type':'speed',
+            'data': None
+        }))
+
+        result = self.send_mock.call_args_list
+
+        expected = [
+            mock.call('M199'),
         ]
 
         self.assertEquals(expected, result)
@@ -194,7 +214,9 @@ class CommandToGCodeTestCase(unittest.TestCase):
 
         result = self.send_mock.call_args_list
 
-        expected = []
+        expected = [
+            mock.call('M204'),
+        ]
 
         self.assertEquals(expected, result)
         self.send_mock.reset_mock()
@@ -259,6 +281,24 @@ class CommandToGCodeTestCase(unittest.TestCase):
         expected = [
             mock.call('M112'),
             mock.call('M999')
+        ]
+
+        self.assertEquals(expected, result)
+        self.send_mock.reset_mock()
+
+    def test_switches_command(self):
+        """
+        Testing the 'switches' command
+        """
+
+        self.loop.run_until_complete(self.com2gcode.process({
+            'type':'switches'
+        }))
+
+        result = self.send_mock.call_args_list
+
+        expected = [
+            mock.call('M119')
         ]
 
         self.assertEquals(expected, result)

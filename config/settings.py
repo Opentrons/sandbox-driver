@@ -23,19 +23,33 @@ class Config(object):
         'acceleration' :    ['xy','z','a','b']
     }
 
+    GCODE_MOVE                      = 'G0'
+    GCODE_HOME                      = 'G28'
+    GCODE_ABSOLUTE_POSITIONING      = 'G90'
+    GCODE_RELATIVE_POSITIONING      = 'G91'
+    GCODE_SET_POSITION              = 'G92'
+    GCODE_EMERGENCY_STOP            = 'M112'
+    GCODE_GET_POSITION              = 'M114'
+    GCODE_GET_ENDSTOPS              = 'M119'
+    GCODE_GET_SPEEDS                = 'M199'
+    GCODE_ACCELERATION              = 'M204'
+    GCODE_RESTART                   = 'M999'
+
     # dict of gcode commands
     # only one command (plus its arguments/values) is sent to smoothie-com at a time
     GCODE_COMMANDS = {
-        'move'          : 'G0',
-        'position'      : 'G92',
-        'position_get'  : 'M114',
-        'speed'         : 'G0',
-        'move_abs'      : 'G90',
-        'move_rel'      : 'G91',
-        'home'          : 'G28',
-        'acceleration'  : 'M204',
-        'hardstop'      : 'M112',
-        'reset'         : 'M999'
+        'move'          : GCODE_MOVE,
+        'position'      : GCODE_SET_POSITION,
+        'position_get'  : GCODE_GET_POSITION,
+        'speed'         : GCODE_MOVE,
+        'speed_get'     : GCODE_GET_SPEEDS,
+        'move_abs'      : GCODE_ABSOLUTE_POSITIONING,
+        'move_rel'      : GCODE_RELATIVE_POSITIONING,
+        'home'          : GCODE_HOME,
+        'acceleration'  : GCODE_ACCELERATION,
+        'hardstop'      : GCODE_EMERGENCY_STOP,
+        'reset'         : GCODE_RESTART,
+        'switches'      : GCODE_GET_ENDSTOPS
     }
 
     # labels for any value passed with a command
