@@ -31,23 +31,25 @@ class SmoothieCom(object):
     def __init__(self, device, loop=None):
         self.device = device
         self.loop = loop or asyncio.get_event_loop()
-        self._halt_state = 0 # 0 = Not Halted, 1 = To Be Halted, 2 = Halted
+        self.halt_state = 0 # 0 = Not Halted, 1 = To Be Halted, 2 = Halted
 
     @asyncio.coroutine
     def connect(self):
         """ Connect to Smoothie """
         try:
             reader, writer = yield from serial_asyncio.open_serial_connection(
-                #self.device,
-                baudrate=115200#,
-                #loop=self.loop
+                self.loop,
+                None,
+                self.device,
+                baudrate=115200
             )
         except OSError as e:
             logger.error("Failed to connect to Smoothieboard")
             raise e
         self.reader = reader
         self.writer = writer
-        return (yield from self.smoothie_handshake())
+        return True
+    #(yield from self.smoothie_handshake())
 
     def get_delimited_gcode(self, gcode):
         """ Add delimiter to gcode for Smoothie board """
@@ -59,27 +61,31 @@ class SmoothieCom(object):
 
     def check_halt_state(self, gcode=''):
         """ Check halt state """
+        print('check_halt_state called...')
+        print('halt state is',self.halt_state)
         if self.halt_state == 1:
             logger.info('Halting... sending M112')
             self.halt_state = 2
             self.writer.write('M112'.encode('utf-8'))
             yield from self.writer.drain()
-            return true
+            return True
         elif self.halt_state == 2 and gcode != 'M999':
             logger.info('Halted')
-            return true
-        return false
+            return True
+        return False
 
     @asyncio.coroutine
     def smoothie_handshake(self):
         first_message = yield from self._read()
+        print('first_message:',first_message)
         second_message = yield from self._read()
+        print('second_message:',second_message)
         return (first_message == 'Smoothie') and (second_message == 'ok')
 
     @asyncio.coroutine
     def write_and_drain(self, message):
         try:
-            if check_halt_state(message):
+            if (yield from self.check_halt_state(message)):
                 return
             self.writer.write(message.encode('utf-8'))
             yield from self.writer.drain()
@@ -261,7 +267,7 @@ class SmoothieCom(object):
     @asyncio.coroutine
     def _read(self):
         try:
-            if check_halt_state():
+            if (yield from self.check_halt_state()):
                 return
             data = yield from asyncio.wait_for(self.reader.readline(), timeout=2)
             return data.decode().strip()
@@ -283,7 +289,10 @@ def test_response_handler(description, message):
 def repl(smc):
     while True:
         req = input('>>> ').strip()
-        res = yield from smc.send(req, test_response_handler)
+        if req == 'halt':
+            res = smc.halt()
+        else:
+            res = yield from smc.send(req, test_response_handler)
         print('res:', res)
 
 if __name__ == '__main__':
